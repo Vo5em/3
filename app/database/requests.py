@@ -1,0 +1,463 @@
+import base64
+import httpx
+import asyncio
+import uuid
+from fastapi import FastAPI, Request
+from app.database.models import async_session, User, Order
+from app.notification import notify_before_end, notify_spss, notify_end
+from zoneinfo import ZoneInfo
+from sqlalchemy import select, update, delete, desc
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime, timedelta
+from yookassa import Payment, Configuration
+from config import yookassa_shopid, yookassa_api, mybot
+from app.gen2 import activatekey
+
+
+
+
+MOSCOW_TZ = ZoneInfo("Europe/Moscow")
+scheduler = AsyncIOScheduler(timezone=MOSCOW_TZ)
+
+Configuration.account_id = yookassa_shopid
+Configuration.secret_key = yookassa_api
+
+app = FastAPI()
+
+
+async def set_user(tg_id, ref_id):
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        if not user:
+            if ref_id:
+                ref_check = await session.scalar(select(User).where(User.tg_id == ref_id))
+                if ref_check:
+                    session.add(User(tg_id=tg_id,referrer_id=ref_check.id))
+                    new_daybalance = (ref_check.daybalance) + 7
+                    is_day = await find_dayend(ref_id)
+                    now_moscow = datetime.now(tz=MOSCOW_TZ)
+                    if is_day.tzinfo is None:
+                        is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+                    if is_day < now_moscow:
+                        dayend = now_moscow + timedelta(days=new_daybalance)
+                        await session.execute(update(User).where(User.tg_id == ref_id).values(dayend=dayend,
+                                                                                              daybalance=0))
+                    else:
+                        dayend = is_day + timedelta(days=new_daybalance)
+                        await session.execute(update(User).where(User.tg_id == ref_id).values(dayend=dayend,
+                                                                                              daybalance=0))
+                else:
+                    session.add(User(tg_id=tg_id))
+            else:
+                session.add(User(tg_id=tg_id))
+        await session.commit()
+
+
+async def set_key(tg_id, vless_link, new_uuid):
+    async with async_session() as session:
+        result = await session.execute(select(User.daybalance).where(User.tg_id == tg_id))
+        daybalance = result.scalar_one_or_none()
+        now_moscow = datetime.now(tz=MOSCOW_TZ)
+        dayend = now_moscow + timedelta(days=daybalance)
+        dayend_naive = dayend.replace(tzinfo=None)
+        await session.execute(update(User).where(User.tg_id == tg_id).values(vpnkey=vless_link,
+                                                                             uuid=new_uuid,
+                                                                             dayend=dayend_naive,
+                                                                             daybalance=0))
+        await session.commit()
+
+
+async def check_end():
+    print("ger")
+    from app.gen import delkey
+    now_moscow = datetime.now(tz=MOSCOW_TZ)
+    try:
+        async with async_session() as session:
+            end = await session.execute(select(User.uuid, User.tg_id).where
+                                        (User.dayend != None, User.dayend < now_moscow, User.keys_active == True))
+            results = end.all()
+            if not results:
+                return
+            for uuid, tg_id in results:
+                await delkey(uuid)
+            await session.commit()
+    except Exception as e:
+        print(f"Ошибка в check_end: {e}")
+
+
+async def cheng_state_d(uuid):
+    async with async_session() as session:
+        await session.execute(update(User).where(User.uuid == uuid).values(keys_active = False))
+        await session.commit()
+
+async def cheng_state_a(uuid):
+    async with async_session() as session:
+        await session.execute(update(User).where(User.uuid == uuid).values(keys_active = True))
+        await session.commit()
+
+
+async def get_users():
+    async with async_session() as session:
+        result = await session.scalars(select(User.tg_id))
+        return result.all()
+
+
+async def get_vip():
+    async with async_session() as session:
+        result = await session.execute(select(User.tg_id).where(User.payload != None))
+        return [row[0] for row in result.all()]
+
+
+async def get_broke():
+    async with async_session() as session:
+        result = await session.execute(select(User.tg_id).where(User.payload == None))
+        return [row[0] for row in result.all()]
+
+
+async def find_key(tg_id):
+    async with async_session() as session:
+        key = await session.scalar(select(User.vpnkey).where(User.tg_id == tg_id))
+        return key
+
+
+async def find_dayend(tg_id):
+    async with async_session() as session:
+        day = await session.scalar(select(User.dayend).where(User.tg_id == tg_id))
+    return day
+
+
+async def find_tgid(id):
+    async with async_session() as session:
+        tg_id = await session.scalar(select(User.tg_id).where(User.id == id))
+    return tg_id
+
+
+async def maketake(iid, ref_id):
+    async with async_session() as session:
+        result = await session.execute(
+            select(Order).where(Order.user_id == iid, Order.status == "paid")
+        )
+        paid_orders = result.scalars().all()
+
+        if iid and len(paid_orders) <= 1:
+            await takeprise(ref_id)
+
+
+async def takeprise(ref_id2):
+    async with async_session() as session:
+         ref_check = await session.scalar(select(User).where(User.id == ref_id2))
+         if ref_check:
+            print("ger")
+            new_daybalance = (ref_check.daybalance) + 7
+            is_tgid = await find_tgid(ref_id2)
+            is_day = await find_dayend(is_tgid)
+            now_moscow = datetime.now(tz=MOSCOW_TZ)
+            if is_day.tzinfo is None:
+                is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+            if is_day < now_moscow:
+                dayend = now_moscow + timedelta(days=new_daybalance)
+                await session.execute(update(User).where(User.tg_id == is_tgid).values(dayend=dayend,
+                                                                                      daybalance=0))
+            else:
+                dayend = is_day + timedelta(days=new_daybalance)
+                await session.execute(update(User).where(User.tg_id == is_tgid).values(dayend=dayend,
+                                                                                      daybalance=0))
+         await session.commit()
+
+
+async def find_payload(tg_id):
+    async with async_session() as session:
+        payload = await session.scalar(select(User.payload).where(User.tg_id == tg_id))
+    return payload
+
+
+async def save_message(tg_id, message_id):
+    async with async_session() as session:
+        result = await session.execute(select(User).where(User.tg_id == tg_id))
+        user = result.scalars().first()
+        print("t")
+        if user:
+            user.message_id = message_id
+        await session.commit()
+
+
+async def find_message(tg_id):
+    async with async_session() as session:
+        message = await session.scalar(select(User.message_id).where(User.tg_id == tg_id))
+    return message
+
+
+async def find_paymethod_id(tg_id):
+    async with async_session() as session:
+        paymenthod_id = await session.scalar(select(User.payment_method_id).where
+                                             (User.payment_method_id != None, User.tg_id == tg_id))
+        return paymenthod_id
+
+
+async def delpaymethod_id(tg_id):
+    async with async_session() as session:
+        paymenthod_id = await session.scalar(select(User.payment_method_id).where
+                                             (User.payment_method_id != None, User.tg_id == tg_id)
+                                             )
+        if paymenthod_id:
+            await session.execute(update(User).where(User.tg_id == tg_id).values(payment_method_id=None,
+                                                                                 notify_message=0)
+                                  )
+        await session.commit()
+
+
+async def schedulers():
+    while True:
+        try:
+            print("geeer")
+            await check_subscriptions()
+            await check_end()
+            await check_notyfy()
+            await check_pending()
+        except Exception as e:
+            print(f"Ошибка в schedulers(): {e}")
+        await asyncio.sleep(1800)
+
+
+async def check_pending():
+    now = datetime.now(tz=MOSCOW_TZ)
+    async with async_session() as session:
+        await session.execute(
+            update(Order).where(Order.create_at != None, Order.create_at <= now - timedelta(minutes=15),
+                                Order.status == "pending").values(status="canceled")
+        )
+        await session.commit()
+
+
+async def plusnoty(tg_id):
+    async with async_session() as session:
+        await session.execute(update(User).where(User.tg_id == tg_id).values(notify_message=2))
+        await session.commit()
+
+
+async def check_notyfy():
+    print("sta")
+    now_moscow = datetime.now(tz=MOSCOW_TZ)
+    try:
+        async with async_session() as session:
+            # За 1 день до окончания
+            users_before = await session.execute(
+                select(User).where(
+                    User.dayend != None,
+                    User.dayend - timedelta(days=1) <= now_moscow,
+                    User.dayend - timedelta(hours=1) > now_moscow,
+                    User.notify_message < 1
+                )
+            )
+            for user in users_before.scalars().all():
+                await notify_before_end(user.tg_id)
+                await session.execute(
+                    update(User).where(User.tg_id == user.tg_id).values(notify_message=1)
+                )
+
+            # За 1 час до окончания
+            users_end = await session.execute(
+                select(User).where(
+                    User.dayend != None,
+                    User.dayend - timedelta(hours=1) <= now_moscow,
+                    User.dayend >= now_moscow,
+                    User.notify_message < 2
+                )
+            )
+            for user in users_end.scalars().all():
+                await notify_end(user.tg_id)
+                await session.execute(
+                    update(User).where(User.tg_id == user.tg_id).values(notify_message=2)
+                )
+
+            await session.commit()
+
+    except Exception as e:
+        print(f'{e}')
+
+
+async def create_payment(tg_id: int, amount: float = 150.0, currency: str = "RUB") -> tuple[str, int]:
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        if not user:
+            raise ValueError("Пользователь не найден")
+
+        if not user.payload:
+            user.payload = str(uuid.uuid4())
+        payload_value = user.payload
+
+        now = datetime.now(tz=MOSCOW_TZ)
+        order = Order(user_id=user.id, create_at=now, status="pending")
+        session.add(order)
+        await session.commit()
+        await session.refresh(order)  # получаем order.id
+        order_id = order.id
+
+    def _sync_create():
+        return Payment.create({
+            "amount": {"value": f"{amount:.2f}", "currency": currency},
+            "capture": True,
+            "confirmation": {"type": "redirect", "return_url": str(mybot)},
+            "description": f"Оплата подписки для {tg_id}",
+            "save_payment_method": True,
+            "metadata": {"payload": payload_value},
+        })
+
+    payment = await asyncio.to_thread(_sync_create)
+    payment_id = str(payment.id)
+    payment_url = payment.confirmation.confirmation_url
+
+    # Сохраняем payment_id в заказе
+    async with async_session() as session:
+        order = await session.get(Order, order_id)
+        order.payment_id = payment_id
+        await session.commit()
+
+    print(f"[LOG] Created payment: {payment_id}, order_id: {order_id}")
+    return payment_url
+
+
+@app.post("/yookassa/webhook")
+async def yookassa_webhook(request: Request):
+    raw = await request.body()
+    print("RAW webhook:", raw.decode())  # для отладки
+
+    data = await request.json()
+    event = data.get("event")
+    obj = data.get("object", {})
+
+    if event == "payment.succeeded":
+        payload = obj.get("metadata", {}).get("payload")
+        payment_method_id = obj.get("payment_method", {}).get("id")
+
+        if payload:
+            async with async_session() as session:
+                result = await session.execute(select(User).where(User.payload == payload))
+                user = result.scalars().first()
+                if not user:
+                    return {"status": "user_not_found"}
+
+                now = datetime.now(tz=MOSCOW_TZ)
+                if not user.dayend or user.dayend < now:
+                    user.dayend = now + timedelta(days=30)
+                else:
+                    user.dayend += timedelta(days=30)
+
+                ruuid = user.uuid
+                tg_id = int(user.tg_id)
+                iid = user.id
+                ref_id = user.referrer_id
+
+
+                await activatekey(ruuid)
+                try:
+                    await notify_spss(tg_id)
+                    await plusnoty(tg_id)
+                except Exception as e:
+                    print(f"Ошибка при notify_spss: {e}")
+                if ref_id is not None:
+                    await maketake(iid, ref_id)
+                else:
+                    print("User has no referrer, skipping takeprise")
+
+
+                if payment_method_id:
+                    user.payment_method_id = payment_method_id
+
+                result = await session.execute(
+                    select(Order)
+                    .where(Order.user_id == user.id)
+                    .order_by(Order.create_at.desc())
+                )
+                order = result.scalars().first()
+                if order:
+                    order.status = "paid"
+
+                await session.commit()
+
+
+    elif event == "payment.canceled":
+        payload = obj.get("metadata", {}).get("payload")
+
+        if payload:
+            async with async_session() as session:
+                result = await session.execute(
+                    select(User).where(User.payload == payload)
+                )
+                user = result.scalars().first()
+                if not user:
+                    return {"status": "user_not_found"}
+
+                result = await session.execute(
+                    select(Order)
+                    .where(Order.user_id == user.id)
+                    .order_by(Order.create_at.desc())
+                )
+                order = result.scalars().first()
+                if order:
+                    order.status = "canceled"
+
+                await session.commit()
+
+    return {"status": "ok"}
+
+
+async def create_auto_payment(user: User,session, amount: float = 150.0, currency: str = "RUB"):
+    if not user.payment_method_id:
+        raise ValueError("Нет сохранённого способа оплаты")
+
+    payment = Payment.create({
+        "amount": {
+            "value": f"{amount:.2f}",
+            "currency": currency
+        },
+        "capture": True,
+        "payment_method_id": user.payment_method_id,  # ключ для автосписания
+        "description": f"Автопродление подписки {user.tg_id}",
+        "metadata": {
+            "payload": user.payload,
+            "type": "auto"
+        }
+    })
+    order = Order(
+        user_id=user.id,
+        payment_id=payment.id,
+        status=payment.status,  # pending / succeeded
+        type="auto"
+    )
+
+    session.add(order)
+
+    return payment.id  # можем сохранить для логов
+
+
+async def check_subscriptions():
+    print("g")
+    now = datetime.now(tz=MOSCOW_TZ)
+    try:
+        async with async_session() as session:
+            users = await session.execute(
+                select(User).where(User.dayend != None, User.dayend - timedelta(hours=1) <= now, User.dayend >= now)
+            )
+            for user in users.scalars().all():
+                result = await session.execute(
+                    select(Order).where(
+                        Order.user_id == user.id,
+                        Order.status == "pending"
+                    )
+                )
+                order = result.scalars().first()
+
+                if order:
+                    continue
+
+                await create_auto_payment(user, session)
+
+            await session.commit()
+    except Exception as e:
+        print(f"Ошибка в check_subscriptions: {e}")
+
+@app.get("/")
+async def index(request: Request):
+    return {"message": "Hello"}
+
