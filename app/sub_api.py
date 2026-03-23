@@ -119,7 +119,7 @@ async def sub(uuid: str):
         body = "\n".join(vless_lines)
 
         # НАЗВАНИЕ с кавычками — кодируем в base64 UTF-8 и ставим в profile-title
-        profile_title_value = to_profile_title_b64('eschalon «VPN»')
+        profile_title_value = to_profile_title_b64('UpUp «VPN»')
         headers = {
             # важное: значение ASCII (base64:...), имя заголовка в нижнем регистре OK
             "profile-title": profile_title_value,

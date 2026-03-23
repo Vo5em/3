@@ -387,6 +387,7 @@ async def check_subscriptions():
 
 
 async def disable_autopay_if_failed():
+    print('dis')
     now = datetime.now(tz=MOSCOW_TZ)
 
     async with async_session() as session:

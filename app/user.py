@@ -280,6 +280,7 @@ async def cmd_ref(message: Message):
 
 @user.callback_query(F.data == 'probnik')
 async def probnik(callback: CallbackQuery):
+    await callback.answer('')
     await callback.message.edit_text(f'🎁 Бесплатный доступ\n\n'
                                      f'Попробуйте VPN бесплатно перед покупкой\n\n'
                                      f'📦 В пробный период входит:\n'
@@ -300,10 +301,12 @@ async def aktivttrail(callback: CallbackQuery):
     sub = find_sub(tg_id)
     if not sub:
         await addkey(tg_id, tariff_id)
+        await callback.answer('')
         await callback.message.edit_text(f'',
                                          reply_markup=kb.plus_trial)
     else:
         await plus_subtime(tg_id, tariff_id)
+        await callback.answer('')
         await callback.message.edit_text(f'',
                                          reply_markup=kb.plus_trial)
 
@@ -511,12 +514,10 @@ async def sub(callback: CallbackQuery):
     tg_id = callback.from_user.id
     paymenthodid = await find_paymethod_id(tg_id)
     if not paymenthodid:
-        is_day = await find_dayend(tg_id)
+        is_sub = await find_sub(tg_id)
         now_moscow = datetime.now(tz=MOSCOW_TZ)
-        if is_day.tzinfo is None:
-            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-
-        if is_day < now_moscow:
+        is_day = await find_dayend(tg_id)
+        if not is_sub:
             await callback.answer('')
             await callback.message.delete()
             await callback.message.answer(
@@ -530,6 +531,22 @@ async def sub(callback: CallbackQuery):
                 parse_mode="HTML",
                 reply_markup=kb.give_money
             )
+        elif is_day < now_moscow:
+            await callback.answer('')
+            await callback.message.delete()
+            await callback.message.answer(
+                '<b>Абонемент не активен</b>\n\n'
+                '<b>Подписка на месяц — 150₽</b>\n'
+                '— Деньги будут списываться каждый месяц.\n'
+                '— Отключить автопродление можно в любой момент в этом разделе.\n'
+                '— При отключении доступ сохранится до конца оплаченного периода.\n\n'
+                '<b>Важно знать:</b> подключаясь, Ты принимаешь условия\n'
+                'ежемесячного списания.',
+                parse_mode="HTML",
+                reply_markup=kb.give_money
+            )
+
+
         else:
             await callback.answer('')
             await callback.message.delete()
@@ -543,7 +560,7 @@ async def sub(callback: CallbackQuery):
                 f"ежемесячного списания.",
                 parse_mode="HTML",
                 reply_markup=kb.give_money
-            )
+                    )
     else:
         is_day = await find_dayend(tg_id)
         if is_day.tzinfo is None:
