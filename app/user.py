@@ -37,16 +37,45 @@ async def cmd_start(message: Message, command: CommandObject):
     is_key = await find_trial(tg_id)
     paymenthodid = await find_paymethod_id(tg_id)
     if is_key == False:
-        await message.answer(
-            f"👤 Ваш ID: {tg_id}\n\n"
-            f"📦 Ваш тариф: отсутствует\n"
-            f"📡 Статус: 🔴 Не активен\n\n"
-            f"🎁 Бесплатный пробный период доступен!\n"
-            f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
-            f"👇 Выберите действие ниже",
-            parse_mode="HTML",
-            reply_markup=kb.main_pr
-        )
+        is_sub = await find_sub(tg_id)
+        if not is_sub:
+            await message.answer(
+                f"👤 Ваш ID: {tg_id}\n\n"
+                f"📦 Ваш тариф: отсутствует\n"
+                f"📡 Статус: 🔴 Не активен\n\n"
+                f"🎁 Бесплатный пробный период доступен!\n"
+                f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
+                f"👇 Выберите действие ниже",
+                parse_mode="HTML",
+                reply_markup=kb.main_pr
+            )
+        else:
+            tarif = await find_tarif(tg_id)
+            is_day = await find_dayend(tg_id)
+
+            if is_day.tzinfo is None:
+                is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+            if not paymenthodid:
+                await message.answer(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Ваш тариф: {tarif['name']}\n"
+                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📡 Статус: Активен\n"
+                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                    f"♻️ Автопродление: отключено ",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_old)
+            else:
+                await message.answer(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Ваш тариф: {tarif['name']}\n"
+                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📡 Статус: Активен\n"
+                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                    f"♻️ Автопродление: включено",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_old)
+
     else:
         is_day = await find_dayend(tg_id)
         now_moscow = datetime.now(tz=MOSCOW_TZ)
@@ -97,47 +126,64 @@ async def home(callback: CallbackQuery):
     is_key = await find_trial(tg_id)
     paymenthodid = await find_paymethod_id(tg_id)
     if is_key == False:
-        is_day = await find_dayend(tg_id)
-        now_moscow = datetime.now(tz=MOSCOW_TZ)
-
-        if is_day.tzinfo is None:
-            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-        if is_day is not None and (is_day > now_moscow):
-            tarif = await find_tarif(tg_id)
-            if not paymenthodid:
-                await callback.message.edit_text(
-                    f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif['name']}\n"
-                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
-                    f"📡 Статус: Активен\n"
-                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                    f"🎁 Бесплатный пробный период доступен!\n"
-                    f"♻️ Автопродление: отключено ",
-                    parse_mode="HTML",
-                    reply_markup=kb.main_olld)
-            else:
-                await callback.message.edit_text(
-                    f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif['name']}\n"
-                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
-                    f"📡 Статус: Активен\n"
-                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                    f"🎁 Бесплатный пробный период доступен!\n"
-                    f"♻️ Автопродление: включено",
-                    parse_mode="HTML",
-                    reply_markup=kb.main_olld)
-        else:
-            await callback.message.edit_text(
+        is_sub = await find_sub(tg_id)
+        if not is_sub:
+            await callback.answer('')
+            await callback.message.egit_text(
                 f"👤 Ваш ID: {tg_id}\n\n"
                 f"📦 Ваш тариф: отсутствует\n"
-                f"📡 Статус: Не активен\n\n"
+                f"📡 Статус: 🔴 Не активен\n\n"
                 f"🎁 Бесплатный пробный период доступен!\n"
                 f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
-                f"⚡ Подключение занимает меньше 1 минуты\n\n"
                 f"👇 Выберите действие ниже",
                 parse_mode="HTML",
                 reply_markup=kb.main_pr
-        )
+            )
+
+        else:
+            tarif = await find_tarif(tg_id)
+            is_day = await find_dayend(tg_id)
+            now_moscow = datetime.now(tz=MOSCOW_TZ)
+
+            if is_day.tzinfo is None:
+                is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+
+            if is_day > now_moscow:
+                if not paymenthodid:
+                    await callback.message.edit_text(
+                        f"👤 Ваш ID: {tg_id}\n\n"
+                        f"📦 Ваш тариф: {tarif['name']}\n"
+                        f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                        f"📡 Статус: Активен\n"
+                        f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                        f"🎁 Бесплатный пробный период доступен!\n"
+                        f"♻️ Автопродление: отключено ",
+                        parse_mode="HTML",
+                        reply_markup=kb.main_olld)
+                else:
+                    tarif = await find_tarif(tg_id)
+                    await callback.message.edit_text(
+                        f"👤 Ваш ID: {tg_id}\n\n"
+                        f"📦 Ваш тариф: {tarif['name']}\n"
+                        f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                        f"📡 Статус: Активен\n"
+                        f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                        f"🎁 Бесплатный пробный период доступен!\n"
+                        f"♻️ Автопродление: включено",
+                        parse_mode="HTML",
+                        reply_markup=kb.main_olld)
+            else:
+                await callback.message.edit_text(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Ваш тариф: отсутствует\n"
+                    f"📡 Статус: Не активен\n\n"
+                    f"🎁 Бесплатный пробный период доступен!\n"
+                    f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
+                    f"⚡ Подключение занимает меньше 1 минуты\n\n"
+                    f"👇 Выберите действие ниже",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_pr
+            )
     else:
         is_day = await find_dayend(tg_id)
         now_moscow = datetime.now(tz=MOSCOW_TZ)
