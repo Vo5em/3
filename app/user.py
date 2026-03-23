@@ -9,7 +9,7 @@ from app.keyboard import payment_keyboard
 import app.keyboard as kb
 from app.gen import addkey
 
-from app.database.requests import set_user, find_key, find_dayend, create_payment, save_message, find_paymethod_id
+from app.database.requests import set_user, find_key, find_dayend, save_message, find_paymethod_id
 from app.database.requests import delpaymethod_id, find_trial, find_tarif, findd_tarif, find_sub, plus_subtime
 from app.database.pay import create_payment
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")

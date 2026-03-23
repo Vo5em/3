@@ -6,7 +6,6 @@ import asyncio
 import uuid
 from fastapi import FastAPI, Request
 from app.database.models import async_session, User, Order, Subscription,Tariff
-from app.database.requests import find_sub, add_tarif_id
 from app.notification import notify_before_end, notify_spss, notify_end
 from zoneinfo import ZoneInfo
 from sqlalchemy import select, update, delete, desc
@@ -27,6 +26,7 @@ app = FastAPI()
 
 async def create_payment(tg_id: int, amount: float,tariff_id: int, currency: str = "RUB"):
     async with async_session() as session:
+        from app.database.requests import find_sub, add_tarif_id
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
             raise ValueError("Пользователь не найден")
@@ -76,6 +76,8 @@ async def create_payment(tg_id: int, amount: float,tariff_id: int, currency: str
 
 @app.post("/yookassa/webhook")
 async def yookassa_webhook(request: Request):
+    from app.gen import addkey
+    from app.database.requests import findd_tarif, plusnoty, maketake
     raw = await request.body()
     print("RAW webhook:", raw.decode())  # для отладки
 
