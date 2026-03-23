@@ -39,7 +39,8 @@ helps = InlineKeyboardMarkup(inline_keyboard=[
 
 prob = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='✅ Активировать', callback_data='aktiviroval')],
-    [InlineKeyboardButton(text='⬅Назад', callback_date= 'home')]])
+    [InlineKeyboardButton(text='⬅Назад', callback_data= 'home')]
+])
 
 gadgets = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Android', callback_data='android'),
