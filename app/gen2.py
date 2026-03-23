@@ -1,6 +1,6 @@
 import httpx
 import json
-from app.database.models import async_session, Servers, UserServer, User
+from app.database.models import async_session, Servers, UserServer, User, Subscription
 from sqlalchemy import select, update
 
 #REALITY_FP = "chrome"
@@ -18,7 +18,7 @@ async def serch_pull2(uuid):
 
 async def cheng_state_a(uuid):
     async with async_session() as session:
-        await session.execute(update(User).where(User.uuid == uuid).values(keys_active = True))
+        await session.execute(update(Subscription).where(Subscription.uuid == uuid).values(is_active = True))
         await session.commit()
 
 

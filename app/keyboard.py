@@ -1,8 +1,17 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
-main = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Активировать пробный период', callback_data='period')]
+main_pr = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Оплата', callback_data='pay')],
+    [InlineKeyboardButton(text= 'Получить пробный период', callback_data='probnik')],
+    [InlineKeyboardButton(text='Реферальная программа', callback_data='refka')],
+    [InlineKeyboardButton(text='Помощь', callback_data='help')]
+])
+
+main_out = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text= 'Оплата',callback_data='pay')],
+    [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
+    [InlineKeyboardButton(text='Помощь',callback_data='help')]
 ])
 
 
@@ -14,11 +23,23 @@ main_old = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 
+main_olld = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text= 'Оплата',callback_data='pay'),
+     InlineKeyboardButton(text= 'Получить пробный период', callback_data='probnik')],
+    [InlineKeyboardButton(text='Перейти к подключению',callback_data='period')],
+    [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
+    [InlineKeyboardButton(text='Помощь',callback_data='help')]
+])
+
+
 helps = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Поддержка',url='https://t.me/eschalonsupport')],
     [InlineKeyboardButton(text='⬅Назад',callback_data='home')]
 ])
 
+prob = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='✅ Активировать', callback_data='aktiviroval')],
+    [InlineKeyboardButton(text='⬅Назад', callback_date= 'home')]])
 
 gadgets = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Android', callback_data='android'),
@@ -27,6 +48,11 @@ gadgets = InlineKeyboardMarkup(inline_keyboard=[
      InlineKeyboardButton(text='Windows', callback_data='windows')],
     [InlineKeyboardButton(text='MacOS', callback_data='macos'),
      InlineKeyboardButton(text='Android TV', callback_data='androidtv')]
+])
+
+plus_trial = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = 'Перейти к подключению', callback_data='gadgets_old')],
+    [InlineKeyboardButton(text = '↩️На главную', callback_data='home')]
 ])
 
 
@@ -97,7 +123,8 @@ go_pay = InlineKeyboardMarkup(inline_keyboard=[
 
 
 give_money = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Перейти к оплате', callback_data='doitpls')],
+    [InlineKeyboardButton(text='Перейти к оплате', callback_data='doitpls_1')],
+    [InlineKeyboardButton(text = '1кк в час', callback_data = 'doitpls_2')],
     [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
 ])
 

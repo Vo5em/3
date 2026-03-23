@@ -10,7 +10,8 @@ import app.keyboard as kb
 from app.gen import addkey
 
 from app.database.requests import set_user, find_key, find_dayend, create_payment, save_message, find_paymethod_id
-from app.database.requests import delpaymethod_id
+from app.database.requests import delpaymethod_id, find_trial, find_tarif, findd_tarif, find_sub, plus_subtime
+from app.database.pay import create_payment
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
 user = Router()
@@ -33,14 +34,18 @@ async def cmd_start(message: Message, command: CommandObject):
     else:
         await set_user(tg_id, None)
 
-    is_key = await find_key(tg_id)
-    if not is_key:
+    is_key = await find_trial(tg_id)
+    paymenthodid = await find_paymethod_id(tg_id)
+    if is_key == False:
         await message.answer(
-            f"<blockquote>eschalon department 01</blockquote>\n"
-                    f"Ты близко.\n\n\n"
-                    f"Анонимность начинается здесь, подключи 3 дня пробного периода.",
+            f"👤 Ваш ID: {tg_id}\n\n"
+            f"📦 Ваш тариф: отсутствует\n"
+            f"📡 Статус: 🔴 Не активен\n\n"
+            f"🎁 Бесплатный пробный период доступен!\n"
+            f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
+            f"👇 Выберите действие ниже",
             parse_mode="HTML",
-            reply_markup=kb.main
+            reply_markup=kb.main_pr
         )
     else:
         is_day = await find_dayend(tg_id)
@@ -51,44 +56,130 @@ async def cmd_start(message: Message, command: CommandObject):
 
         if is_day < now_moscow:
             await message.answer(
-
-                f"<blockquote>project eschalon;\n dept: 01</blockquote>\n\n\n"
-                        f"<b>Абонемент не активен.</b>",
+                f"👤 Ваш ID: {tg_id}\n\n"
+                f"📦 Ваш тариф: отсутствует\n"
+                f"📡 Статус: Не активен\n\n"
+                f"Чтобы продолжить пользоваться сервисом:\n"
+                f"• Выберите тариф\n"
+                f"• Активируйте подписку\n\n"
+                f"⚡ Подключение занимает меньше 1 минуты\n\n"
+                f"👇 Нажмите «Продлить / Оплатить»",
                 parse_mode="HTML",
-                reply_markup=kb.main_old
+                reply_markup=kb.main_out
             )
-        else: await message.answer(
-            f"<blockquote>project eschalon;\n dept: 01</blockquote>\n\n\n"
-                    f"<b>Абонемент активен.</b>",
-            parse_mode="HTML",
-            reply_markup=kb.main_old
-        )
+        else:
+            tarif = await find_tarif(tg_id)
+            if not paymenthodid:
+                await message.answer(
+                f"👤 Ваш ID: {tg_id}\n\n"
+                f"📦 Ваш тариф: {tarif['name']}\n"
+                f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                f"📡 Статус: Активен\n"
+                f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                f"♻️ Автопродление: отключено ",
+                parse_mode="HTML",
+                reply_markup=kb.main_old)
+            else:
+                await message.answer(
+                f"👤 Ваш ID: {tg_id}\n\n"
+                f"📦 Ваш тариф: {tarif['name']}\n"
+                f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                f"📡 Статус: Активен\n"
+                f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                f"♻️ Автопродление: включено",
+                parse_mode="HTML",
+                reply_markup=kb.main_old)
 
 
 @user.callback_query(F.data == 'home')
 async def home(callback: CallbackQuery):
     tg_id = callback.from_user.id
-    is_day = await find_dayend(tg_id)
-    now_moscow = datetime.now(tz=MOSCOW_TZ)
-    if is_day.tzinfo is None:
-        is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+    is_key = await find_trial(tg_id)
+    paymenthodid = await find_paymethod_id(tg_id)
+    if is_key == False:
+        is_day = await find_dayend(tg_id)
+        now_moscow = datetime.now(tz=MOSCOW_TZ)
 
-    if is_day < now_moscow:
-        await callback.message.edit_media(InputMediaPhoto(
-            media=file_id02,
-            caption=f"<blockquote>project eschalon;\n dept: 01</blockquote>\n\n\n"
-                    f"<b>Абонемент не активен.</b>",
-            parse_mode="HTML"),
-            reply_markup=kb.main_old
+        if is_day.tzinfo is None:
+            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+        if is_day is not None and (is_day > now_moscow):
+            tarif = await find_tarif(tg_id)
+            if not paymenthodid:
+                await callback.message.edit_text(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Ваш тариф: {tarif['name']}\n"
+                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📡 Статус: Активен\n"
+                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                    f"🎁 Бесплатный пробный период доступен!\n"
+                    f"♻️ Автопродление: отключено ",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_olld)
+            else:
+                await callback.message.edit_text(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Ваш тариф: {tarif['name']}\n"
+                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📡 Статус: Активен\n"
+                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                    f"🎁 Бесплатный пробный период доступен!\n"
+                    f"♻️ Автопродление: включено",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_olld)
+        else:
+            await callback.message.edit_text(
+                f"👤 Ваш ID: {tg_id}\n\n"
+                f"📦 Ваш тариф: отсутствует\n"
+                f"📡 Статус: Не активен\n\n"
+                f"🎁 Бесплатный пробный период доступен!\n"
+                f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
+                f"⚡ Подключение занимает меньше 1 минуты\n\n"
+                f"👇 Выберите действие ниже",
+                parse_mode="HTML",
+                reply_markup=kb.main_pr
         )
     else:
-        await callback.message.edit_media(InputMediaPhoto(
-            media=file_id01,
-            caption=f"<blockquote>project eschalon;\n dept: 01</blockquote>\n\n\n"
-                    f"<b>Абонемент активен.</b>",
-            parse_mode="HTML"),
-            reply_markup=kb.main_old
-        )
+        is_day = await find_dayend(tg_id)
+        now_moscow = datetime.now(tz=MOSCOW_TZ)
+
+        if is_day.tzinfo is None:
+            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+
+        if is_day < now_moscow:
+            await callback.message.edit_text(
+                f"👤 Ваш ID: {tg_id}\n\n"
+                f"📦 Ваш тариф: отсутствует\n"
+                f"📡 Статус: Не активен\n\n"
+                f"Чтобы продолжить пользоваться сервисом:\n"
+                f"• Выберите тариф\n"
+                f"• Активируйте подписку\n\n"
+                f"⚡ Подключение занимает меньше 1 минуты\n\n"
+                f"👇 Нажмите «Продлить / Оплатить»",
+                parse_mode="HTML",
+                reply_markup=kb.main_out
+            )
+        else:
+            tarif = await find_tarif(tg_id)
+            if not paymenthodid:
+                await callback.message.edit_text(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Ваш тариф: {tarif['name']}\n"
+                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📡 Статус: Активен\n"
+                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                    f"♻️ Автопродление: отключено ",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_old)
+            else:
+                await callback.message.edit_text(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Ваш тариф: {tarif['name']}\n"
+                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📡 Статус: Активен\n"
+                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
+                    f"♻️ Автопродление: включено",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_old)
 
 
 @user.callback_query(F.data == 'help')
@@ -99,7 +190,7 @@ async def helps(callback: CallbackQuery):
     await callback.message.answer(
         f"<b>ID:</b> <code>{tg_id}</code>\n\n"
         f"Первым сообщением напиши свой ID\n"
-        f"Дальше опиши проблему — и мы тебе поможем.",
+        f"Дальше опиши проблему - и мы тебе поможем.",
         parse_mode="HTML",
         reply_markup=kb.helps
     )
@@ -112,7 +203,7 @@ async def cmd_help(message: Message):
     await message.answer(
         f"<b>ID:</b><code>{tg_id}</code>\n\n"
         f"Первым сообщением напиши свой ID\n"
-        f"Дальше опиши проблему — и мы тебе поможем.",
+        f"Дальше опиши проблему - и мы тебе поможем.",
         parse_mode="HTML",
         reply_markup=kb.helps
     )
@@ -132,7 +223,7 @@ async def cmd_sub(message: Message):
         if is_day < now_moscow:
             await message.answer(
                 '<b>Абонемент не активен</b>\n\n'
-                '<b>Подписка на месяц — 150₽</b>\n'
+                '<b>Подписка на месяц - 150₽</b>\n'
                 '— Деньги будут списываться каждый месяц.\n'
                 '— Отключить автопродление можно в любой момент в этом разделе.\n'
                 '— При отключении доступ сохранится до конца оплаченного.\n\n'
@@ -187,6 +278,37 @@ async def cmd_ref(message: Message):
     )
 
 
+@user.callback_query(F.data == 'probnik')
+async def probnik(callback: CallbackQuery):
+    await callback.message.edit_text(f'🎁 Бесплатный доступ\n\n'
+                                     f'Попробуйте VPN бесплатно перед покупкой\n\n'
+                                     f'📦 В пробный период входит:\n'
+                                     f'• До 2 устройств одновременно\n'
+                                     f'• Доступ ко всем серверам\n'
+                                     f'• Без ограничений по трафику\n\n'
+                                     f'⏳ Доступ: 3 дня\n'
+                                     f'🎯 Можно активировать только один раз\n'
+                                     f'⚡ Подключение занимает меньше 1 минуты\n\n'
+                                     f'👇 Нажмите кнопку ниже, чтобы начать',
+                                     reply_markup=kb.prob
+                                     )
+
+@user.callback_query(F.data == 'aktiviroval')
+async def aktivttrail(callback: CallbackQuery):
+    tg_id = callback.from_user.id
+    tariff_id = 1
+    sub = find_sub(tg_id)
+    if not sub:
+        await addkey(tg_id, tariff_id)
+        await callback.message.edit_text(f'',
+                                         reply_markup=kb.plus_trial)
+    else:
+        await plus_subtime(tg_id, tariff_id)
+        await callback.message.edit_text(f'',
+                                         reply_markup=kb.plus_trial)
+
+
+
 @user.callback_query(F.data == 'period')
 async def period(callback: CallbackQuery):
     tg_id = callback.from_user.id
@@ -196,7 +318,7 @@ async def period(callback: CallbackQuery):
         await callback.message.delete()
         await callback.message.answer('*Выберите ваше устройство:*',
                                          parse_mode="MarkdownV2",
-                                         reply_markup=kb.gadgets)
+                                         reply_markup=kb.gadgets_old)
     else:
         is_day = await find_dayend(tg_id)
         now_moscow = datetime.now(tz=MOSCOW_TZ)
@@ -218,12 +340,13 @@ async def period(callback: CallbackQuery):
 @user.callback_query(F.data == 'android')
 async def connect_an(callback: CallbackQuery):
     user_id = callback.from_user.id
+    tarif_id = await find_tarif(user_id)
     is_key = await find_key(user_id)
     if not is_key:
-      await addkey(user_id)
-      is_key = await find_key(user_id)
-      await callback.answer('')
-      await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
+      await addkey(user_id, tarif_id)
+    is_key = await find_key(user_id)
+    await callback.answer('')
+    await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
                                        f'<b>№1</b> - скачай приложение'
                                        f' <a href="https://play.google.com'
                                        f'/store/apps/details?id=com.v2raytun.android">v2RayTun</a>'"\n"
@@ -236,30 +359,19 @@ async def connect_an(callback: CallbackQuery):
                                        disable_web_page_preview=True,
                                        parse_mode="HTML",
                                     reply_markup=kb.downloadand)
-    else: await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
-                                           f'<b>№1</b> - скачай приложение'
-                                           f' <a href="https://play.google.com'
-                                           f'/store/apps/details?id=com.v2raytun.android">v2RayTun</a>'"\n"
-                                           "<b>№2</b> - Нажми на ключ доступа cнизу (начинается с vless://)\n"
-                                           "<b>№3</b> - Запусти программу v2RayTun и нажми на <b>+</b>"
-                                           " в правом верхнем углу\n"
-                                           "<b>№4</b> - Выбери «Импорт из буфера обмена»\n"
-                                           "<b>№5</b> - Нажми круглую кнопку включения\n\n"
-                                           f"<blockquote expandable><code>{html.escape(is_key)}</code></blockquote>",
-                                           disable_web_page_preview=True,
-                                           parse_mode="HTML",
-                                           reply_markup=kb.downloadand)
+
 
 
 @user.callback_query(F.data == 'iphone')
 async def connect_i(callback: CallbackQuery):
     user_id = callback.from_user.id
+    tarif_id = await find_tarif(user_id)
     is_key = await find_key(user_id)
     if not is_key:
-      await addkey(user_id)
-      is_key = await find_key(user_id)
-      await callback.answer('')
-      await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
+      await addkey(user_id, tarif_id)
+    is_key = await find_key(user_id)
+    await callback.answer('')
+    await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
                                        f'<b>№1</b> - Cкачай приложение'
                                        f' <a href="https://apps.apple.com'
                                        f'/lt/app/v2raytun/id6476628951">v2RayTun</a>'"\n"
@@ -272,30 +384,19 @@ async def connect_i(callback: CallbackQuery):
                                        disable_web_page_preview=True,
                                        parse_mode="HTML",
                                      reply_markup=kb.downloadiph)
-    else: await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
-                                           f'<b>№1</b> - Cкачай приложение'
-                                           f' <a href="https://apps.apple.com'
-                                           f'/lt/app/v2raytun/id6476628951">v2RayTun</a>'"\n"
-                                           "<b>№2</b> - Нажми на ключ доступа cнизу (начинается с vless://)\n"
-                                           "<b>№3</b> - Запусти программу v2RayTun и нажми на <b>+</b>"
-                                           " в правом верхнем углу\n"
-                                           "<b>№4</b> -  Выбери «Импорт из буфера обмена»\n"
-                                           "<b>№5</b> - Нажми круглую кнопку включения\n\n"
-                                           f"<blockquote expandable><code>{html.escape(is_key)}</code></blockquote>",
-                                           disable_web_page_preview=True,
-                                           parse_mode="HTML",
-                                           reply_markup=kb.downloadiph)
+
 
 
 @user.callback_query(F.data == 'huawei')
 async def connect_hu(callback: CallbackQuery):
     user_id = callback.from_user.id
     is_key = await find_key(user_id)
+    tarif_id = await find_tarif(user_id)
     if not is_key:
-      await addkey(user_id)
-      is_key = await find_key(user_id)
-      await callback.answer('')
-      await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
+      await addkey(user_id, tarif_id)
+    is_key = await find_key(user_id)
+    await callback.answer('')
+    await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
                                        f'<b>№1</b> - Cкачай приложение'
                                        f' <a href="https://github.com/barmaiey5553/V2RayTun-for-china-mobile'
                                        f'/releases/download/v1.0/v2RayTun_3.10.42_arm64-v8a.apk">v2RayTun</a>'"\n"
@@ -308,31 +409,18 @@ async def connect_hu(callback: CallbackQuery):
                                        disable_web_page_preview=True,
                                        parse_mode="HTML",
                                      reply_markup=kb.downloadHUA)
-    else: await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
-                                           f'<b>№1</b> - Cкачай приложение'
-                                           f' <a href="https://github.com/barmaiey5553/V2RayTun-for-china-mobile'
-                                           f'/releases/download/v1.0/v2RayTun_3.10.42_arm64-v8a.apk">v2RayTun</a>'"\n"
-                                           "<b>№2</b> - Нажми на ключ доступа cнизу (начинается с vless://)\n"
-                                           "<b>№3</b> - Запусти программу v2RayTun и нажми на <b>+</b>"
-                                           " в правом верхнем углу\n"
-                                           "<b>№4</b> -  Выбери «Импорт из буфера обмена»\n"
-                                           "<b>№5</b> - Нажми круглую кнопку включения\n\n"
-                                           f"<blockquote expandable><code>{html.escape(is_key)}</code></blockquote>",
-                                           disable_web_page_preview=True,
-                                           parse_mode="HTML",
-                                           reply_markup=kb.downloadHUA)
-
 
 
 @user.callback_query(F.data == 'windows')
 async def connect_win(callback: CallbackQuery):
     user_id = callback.from_user.id
     is_key = await find_key(user_id)
+    tarif_id = await find_tarif(user_id)
     if not is_key:
-      await addkey(user_id)
-      is_key = await find_key(user_id)
-      await callback.answer('')
-      await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
+      await addkey(user_id, tarif_id)
+    is_key = await find_key(user_id)
+    await callback.answer('')
+    await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
                                        f'<b>№1</b> - Скачай приложение'
                                        f' <a href="https://github.com/MatsuriDayo/nekoray/releases'
                                        f'/download/4.0.1/nekoray-4.0.1-2024-12-12-windows64.zip">NekoBox</a>'"\n"
@@ -347,33 +435,18 @@ async def connect_win(callback: CallbackQuery):
                                        disable_web_page_preview=True,
                                        parse_mode="HTML",
                                      reply_markup=kb.downloadwin)
-    else: await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
-                                           f'<b>№1</b> - Скачай приложение'
-                                           f' <a href="https://github.com/MatsuriDayo/nekoray/releases'
-                                           f'/download/4.0.1/nekoray-4.0.1-2024-12-12-windows64.zip">NekoBox</a>'"\n"
-                                           "<b>№2</b> - Нажми на ключ доступа cнизу (начинается с vless://)\n"
-                                           "<b>№3</b> - Разархивируй и запусти программу «NekoBox»"
-                                           " от имени администратора\n"
-                                           "<b>№4</b> - Включи режим TUN в правом веерхнем углу \n"
-                                           "<b>№5</b> - Нажми правой кнопкой мыши по пустому пространству"
-                                           " и выбери «Добавить профиль из буфера обмена»\n"
-                                           "<b>№6</b> - Нажми правой кнопкой мыши по появившимуся профилю"
-                                           " и выбери «Запустить»\n\n"
-                                           f"<blockquote expandable><code>{html.escape(is_key)}</code></blockquote>",
-                                           disable_web_page_preview=True,
-                                           parse_mode="HTML",
-                                           reply_markup=kb.downloadwin)
 
 
 @user.callback_query(F.data == 'macos')
 async def connect_mc(callback: CallbackQuery):
     user_id = callback.from_user.id
     is_key = await find_key(user_id)
+    tarif_id = await find_tarif(user_id)
     if not is_key:
-      await addkey(user_id)
-      is_key = await find_key(user_id)
-      await callback.answer('')
-      await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
+      await addkey(user_id, tarif_id)
+    is_key = await find_key(user_id)
+    await callback.answer('')
+    await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
                                            f'<b>№1</b> - Скачай приложение'
                                            f' <a href="https://github.com/MatsuriDayo/nekoray/releases'
                                            f'/download/4.0.1/nekoray-4.0.1-2024-12-12-windows64.zip">v2RayTun</a>'"\n"
@@ -389,33 +462,19 @@ async def connect_mc(callback: CallbackQuery):
                                            disable_web_page_preview=True,
                                            parse_mode="HTML",
                                            reply_markup=kb.downloadwin)
-    else: await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
-                                           f'<b>№1</b> - Скачай приложение'
-                                           f' <a href="https://github.com/MatsuriDayo/nekoray/releases'
-                                           f'/download/4.0.1/nekoray-4.0.1-2024-12-12-windows64.zip">v2RayTun</a>'"\n"
-                                           "<b>№2</b> - Нажми на ключ доступа cнизу (начинается с vless://)\n"
-                                           "<b>№3</b> - Разархивируй и запусти программу «NekoBox»"
-                                           " имени администратора\n"
-                                           "<b>№4</b> - Включи режим TUN в правом веерхнем углу \n"
-                                           "<b>№5</b> - Нажми правой кнопкой мыши по пустому пространству"
-                                           " и выбери «Добавить профиль из буфера обмена»\n"
-                                           "<b>№6</b> - Нажми правой кнопкой мыши по появившимуся профилю"
-                                           " и выбери «Запустить»\n\n"
-                                           f"<blockquote expandable><code>{html.escape(is_key)}</code></blockquote>",
-                                           disable_web_page_preview=True,
-                                           parse_mode="HTML",
-                                           reply_markup=kb.downloadwin)
+
 
 
 @user.callback_query(F.data == 'androidtv')
 async def connect_antv(callback: CallbackQuery):
     user_id = callback.from_user.id
     is_key = await find_key(user_id)
+    tarif_id = await find_tarif(user_id)
     if not is_key:
-      await addkey(user_id)
-      is_key = await find_key(user_id)
-      await callback.answer('')
-      await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
+      await addkey(user_id, tarif_id)
+    is_key = await find_key(user_id)
+    await callback.answer('')
+    await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
                                        f"<b>№1</b> - Установи пульт на свой телефон по кнопке ниже\n"
                                        "<b>№2</b> - Нажми на ключ доступа cнизу (начинается с vless://)\n"
                                        "<b>№3</b> - Установи v2RayTun на Android TV\n"
@@ -426,17 +485,7 @@ async def connect_antv(callback: CallbackQuery):
                                        disable_web_page_preview=True,
                                        parse_mode="HTML",
                                      reply_markup=kb.downloadTV)
-    else: await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
-                                           f"<b>№1</b> - Установи пульт на свой телефон по кнопке ниже\n"
-                                           "<b>№2</b> - Нажми на ключ доступа cнизу (начинается с vless://)\n"
-                                           "<b>№3</b> - Установи v2RayTun на Android TV"
-                                           "<b>№4</b> - Запусти v2RayTun и выбери пункт «ручной ввод»\n"
-                                           "<b>№5</b> - Вставь скопированный ключ используя установленный пульт\n"
-                                           "<b>№6</b> - Нажми <b>Ок</b>\n\n"
-                                           f"<blockquote expandable><code>{html.escape(is_key)}</code></blockquote>",
-                                           disable_web_page_preview=True,
-                                           parse_mode="HTML",
-                                           reply_markup=kb.downloadTV)
+
 
 
 @user.callback_query(F.data == 'refka')
@@ -524,10 +573,12 @@ async def no(callback: CallbackQuery):
     )
 
 
-@user.callback_query(F.data == 'doitpls')
+@user.callback_query(F.data.startswith('doitpls_'))
 async def pay(callback: CallbackQuery):
+    id = int(callback.data.split("_")[1])
     tg_id = callback.from_user.id
-    payment_url = await create_payment(tg_id)
+    tarif = await findd_tarif(id)
+    payment_url = await create_payment(tg_id,tarif.price,tarif.id)
     kburl = payment_keyboard(payment_url)
     message_id = callback.message.message_id
     await save_message(tg_id, message_id)

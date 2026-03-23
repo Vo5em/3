@@ -1,6 +1,6 @@
 from email.policy import default
 
-from sqlalchemy import ForeignKey, String, BigInteger, DateTime, Boolean
+from sqlalchemy import ForeignKey, String, BigInteger, DateTime, Boolean, false
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from datetime import datetime
@@ -24,16 +24,34 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id = mapped_column(BigInteger)
-    vpnkey: Mapped[str] = mapped_column(String(250),nullable=True)
-    uuid: Mapped[str] = mapped_column(String(60),nullable=True)
-    daybalance: Mapped[int] = mapped_column(default=3)
-    dayend = mapped_column(DateTime(timezone=True))
     referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     payment_method_id: Mapped[str] = mapped_column(String(100), nullable=True)
     payload: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
     message_id: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    keys_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     notify_message: Mapped[int] = mapped_column(default=0)
+    trial_used: Mapped[bool] = mapped_column(Boolean, default=False)
+
+class Tariff(Base):
+    __tablename__ = 'tariffs'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(50))        # Стандарт / Плюс
+    duration_days: Mapped[int] = mapped_column()         # 30 / 90 / 180 / 365
+    max_devices: Mapped[int] = mapped_column()           # 1 / 2 / 5 и т.д.
+    price: Mapped[int] = mapped_column()                 # Цена в выбранной валюте=
+
+
+class Subscription(Base):
+    __tablename__ = 'subscriptions'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    tariff_id: Mapped[int] = mapped_column(ForeignKey("tariffs.id"))
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    is_active: Mapped[bool] = mapped_column(default=False)
+    key: Mapped[str] = mapped_column(String(255))  # Сам ключ
+    uuid: Mapped[str] = mapped_column(String(60))  # UUID для подключения
+
 
 
 class Order(Base):

@@ -60,7 +60,7 @@ async def serch_pull(uuid):
     return servers
 
 
-async def addkey(user_id):
+async def addkey(user_id, tarif):
     # Один UUID для всех серверов
     user_uuid = str(uuid.uuid4())
     sub_id = str(uuid.uuid4())[:16]  # 🔥 ОДИН subId для всех серверов
@@ -122,7 +122,7 @@ async def addkey(user_id):
     # Каким должен быть домен подписки? → задаётся в config.SUB_DOMAIN
     subscription_url = f"https://{SUB_DOMAIN}/sub/{user_uuid}"
 
-    await set_key(user_id, subscription_url, user_uuid)
+    await set_key(user_id, subscription_url, user_uuid, tarif)
 
 async def delkey(user_uuid: str):
 
