@@ -129,7 +129,7 @@ async def home(callback: CallbackQuery):
         is_sub = await find_sub(tg_id)
         if not is_sub:
             await callback.answer('')
-            await callback.message.egit_text(
+            await callback.message.edit_text(
                 f"👤 Ваш ID: {tg_id}\n\n"
                 f"📦 Ваш тариф: отсутствует\n"
                 f"📡 Статус: 🔴 Не активен\n\n"
