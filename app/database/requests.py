@@ -180,7 +180,7 @@ async def find_dayend(tg_id):
 async def plus_subtime(tg_id, tariff_id):
     async with async_session() as session:
         from app.gen import addkey
-        id = await session.saclar(select(User.id).where(User.tg_id == tg_id))
+        id = await session.scalar(select(User.id).where(User.tg_id == tg_id))
         tarif = await findd_tarif(tariff_id)
         day = await find_dayend(tg_id)
         if not day:
