@@ -58,8 +58,8 @@ async def cmd_start(message: Message, command: CommandObject):
             if not paymenthodid:
                 await message.answer(
                     f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif['name']}\n"
-                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📦 Ваш тариф: {tarif.name}\n"
+                    f"📱 Устройств: до {tarif.max_devices}\n\n"
                     f"📡 Статус: Активен\n"
                     f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                     f"♻️ Автопродление: отключено ",
@@ -68,8 +68,8 @@ async def cmd_start(message: Message, command: CommandObject):
             else:
                 await message.answer(
                     f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif['name']}\n"
-                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📦 Ваш тариф: {tarif.name}\n"
+                    f"📱 Устройств: до {tarif.max_devices}\n\n"
                     f"📡 Статус: Активен\n"
                     f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                     f"♻️ Автопродление: включено",
@@ -101,8 +101,8 @@ async def cmd_start(message: Message, command: CommandObject):
             if not paymenthodid:
                 await message.answer(
                 f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: {tarif['name']}\n"
-                f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                f"📦 Ваш тариф: {tarif.name}\n"
+                f"📱 Устройств: до {tarif.max_devices}\n\n"
                 f"📡 Статус: Активен\n"
                 f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                 f"♻️ Автопродление: отключено ",
@@ -111,8 +111,8 @@ async def cmd_start(message: Message, command: CommandObject):
             else:
                 await message.answer(
                 f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: {tarif['name']}\n"
-                f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                f"📦 Ваш тариф: {tarif.name}\n"
+                f"📱 Устройств: до {tarif.max_devices}\n\n"
                 f"📡 Статус: Активен\n"
                 f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                 f"♻️ Автопродление: включено",
@@ -152,8 +152,8 @@ async def home(callback: CallbackQuery):
                 if not paymenthodid:
                     await callback.message.edit_text(
                         f"👤 Ваш ID: {tg_id}\n\n"
-                        f"📦 Ваш тариф: {tarif['name']}\n"
-                        f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                        f"📦 Ваш тариф: {tarif.name}\n"
+                        f"📱 Устройств: до {tarif.max_devices}\n\n"
                         f"📡 Статус: Активен\n"
                         f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                         f"🎁 Бесплатный пробный период доступен!\n"
@@ -164,8 +164,8 @@ async def home(callback: CallbackQuery):
                     tarif = await find_tarif(tg_id)
                     await callback.message.edit_text(
                         f"👤 Ваш ID: {tg_id}\n\n"
-                        f"📦 Ваш тариф: {tarif['name']}\n"
-                        f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                        f"📦 Ваш тариф: {tarif.name}\n"
+                        f"📱 Устройств: до {tarif.max_devices}\n\n"
                         f"📡 Статус: Активен\n"
                         f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                         f"🎁 Бесплатный пробный период доступен!\n"
@@ -209,8 +209,8 @@ async def home(callback: CallbackQuery):
             if not paymenthodid:
                 await callback.message.edit_text(
                     f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif['name']}\n"
-                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📦 Ваш тариф: {tarif.name}\n"
+                    f"📱 Устройств: до {tarif.max_devices}\n\n"
                     f"📡 Статус: Активен\n"
                     f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                     f"♻️ Автопродление: отключено ",
@@ -219,8 +219,8 @@ async def home(callback: CallbackQuery):
             else:
                 await callback.message.edit_text(
                     f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif['name']}\n"
-                    f"📱 Устройств: до {tarif['max_devices']}\n\n"
+                    f"📦 Ваш тариф: {tarif.name}\n"
+                    f"📱 Устройств: до {tarif.max_devices}\n\n"
                     f"📡 Статус: Активен\n"
                     f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
                     f"♻️ Автопродление: включено",
