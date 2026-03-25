@@ -144,7 +144,10 @@ async def find_sub(tg_id):
         sub = await session.scalar(select(Subscription.id).where(Subscription.id == id))
         return sub
 
-
+async def change_trial(tg_id):
+    async with async_session() as session:
+        await session.execute(update(User).where(User.tg_id == tg_id).values(trial_used = True))
+        await session.commit()
 
 async def get_users():
     async with async_session() as session:
