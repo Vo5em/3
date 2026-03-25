@@ -60,7 +60,7 @@ async def set_user(tg_id: int, ref_id: int = None):
                     if active_sub.end_date < now_moscow:
                         # подписка истекла — старт с текущего момента
                         active_sub.end_date = now_moscow + timedelta(days=7)
-                        await activatekey(referrer.uuid)# бонус +7 дней
+                        await activatekey(referrer.uuid, active_sub.tariff_id )# бонус +7 дней
                     else:
                         # продлеваем текущую подписку
                         active_sub.end_date += timedelta(days=7)
@@ -101,8 +101,8 @@ async def check_end():
             results = end.all()
             if not results:
                 return
-            for uuid in results:
-                await delkey(uuid)
+            for uuid, tariftariff_id in results:
+                await delkey(uuid, tariftariff_id)
             await session.commit()
     except Exception as e:
         print(f"Ошибка в check_end: {e}")

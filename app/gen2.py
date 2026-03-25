@@ -46,7 +46,9 @@ async def get_serv():
 
     return server_dicts
 
-async def activatekey(user_uuid: str):
+async def activatekey(user_uuid: str, tarif_id):
+    from app.database.requests import findd_tarif
+    limit = await findd_tarif(tarif_id)
     servers = await get_serv()
     final_server_ids = set(await serch_pull2(user_uuid))
 
@@ -82,6 +84,7 @@ async def activatekey(user_uuid: str):
                         "flow": "xtls-rprx-vision",
                         "fingerprint": srv["fp"],
                         "shortId": [srv["sid"]],
+                        "limitIp": limit.max_devices,
                         "enable": True
                     }]
                 })

@@ -111,7 +111,7 @@ async def yookassa_webhook(request: Request):
                 ref_id = user.referrer_id
 
 
-                await activatekey(ruuid)
+                await activatekey(ruuid, sub.tariff_id)
                 try:
                     await notify_spss(tg_id)
                     await plusnoty(tg_id)

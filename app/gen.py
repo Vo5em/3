@@ -2,7 +2,7 @@ import httpx
 import uuid
 import base64
 import json
-from app.database.requests import set_key, cheng_state_d
+from app.database.requests import set_key, cheng_state_d, findd_tarif
 from app.database.models import async_session, Servers, UserServer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,6 +66,7 @@ async def addkey(user_id, tarif):
     sub_id = str(uuid.uuid4())[:16]  # 🔥 ОДИН subId для всех серверов
 
     servers = await get_servers()
+    limit = await findd_tarif(tarif)
 
 
     for srv in servers:
@@ -94,7 +95,8 @@ async def addkey(user_id, tarif):
                         "flow": "xtls-rprx-vision",
                         "fingerprint": srv["fp"],
                         "shortId": srv["sid"],
-                        "subId": sub_id,     # один на все
+                        "subId": sub_id, # один на все
+                        "limitIp": limit.max_devices,
                         "enable": True
                     }]
                 }),
@@ -124,9 +126,10 @@ async def addkey(user_id, tarif):
 
     await set_key(user_id, subscription_url, user_uuid, tarif)
 
-async def delkey(user_uuid: str):
+async def delkey(user_uuid: str, tarif_id):
 
     servers = await get_servers()
+    limit = await findd_tarif(tarif_id)
     final_server_ids = set(await serch_pull(user_uuid))
 
     for srv in servers:
@@ -155,6 +158,7 @@ async def delkey(user_uuid: str):
                         "flow": "xtls-rprx-vision",
                         "fingerprint": srv["fp"],
                         "shortId": srv["sid"],
+                        "limitIp": limit.max_devices,
                         "enable": False
                     }]
                 })
