@@ -2,16 +2,18 @@ import httpx
 import json
 from fastapi import FastAPI, APIRouter, Response
 from sqlalchemy import select
-from app.database.models import async_session, User
+from app.database.models import async_session, User, Subscription
 from app.gen import get_servers, serch_pull, plusserverid
 import base64
 
 router = APIRouter()
 
 
-async def create_key_on_server(user_uuid: str, srv: dict):
+async def create_key_on_server(user_uuid: str, srv: dict, tarif_id):
+    from app.database.requests import findd_tarif
     client_email = f"{"name"}-{user_uuid[:8]}"
     sub_id = user_uuid[:16]
+    limit = await findd_tarif(tarif_id)
 
     async with httpx.AsyncClient(base_url=srv["base_url"], timeout=10.0) as client:
         login_resp = await client.post("login", json={
@@ -32,6 +34,7 @@ async def create_key_on_server(user_uuid: str, srv: dict):
                     "fingerprint": srv["fp"],
                     "shortId": srv["sid"],
                     "subId": sub_id,
+                    "limitIp": limit.max_devices,
                     "enable": True
                 }]
             }),
@@ -64,9 +67,9 @@ def to_profile_title_b64(s: str) -> str:
 async def sub(uuid: str):
     print('dfg')
     async with async_session() as session:
-        user = await session.scalar(select(User).where(User.uuid == uuid))
+        sub = await session.scalar(select(Subscription).where(Subscription.uuid == uuid))
 
-        if not user:
+        if not sub:
             return Response("User not found", status_code=404, media_type="text/plain")
 
         user_server_ids = set(await serch_pull(uuid))
@@ -77,14 +80,14 @@ async def sub(uuid: str):
         enabled_server_ids = {
             srv["id"] for srv in servers if srv.get("enabled")
         }
-        if user.keys_active:
+        if sub.is_active:
         # 3. какие сервера нужно ДОБАВИТЬ пользователю
             missing_server_ids = enabled_server_ids - user_server_ids
 
             for srv in servers:
                 if srv["id"] in missing_server_ids:
                     try:
-                        await create_key_on_server(uuid, srv)
+                        await create_key_on_server(uuid, srv, sub.tariff_id)
                     except Exception as e:
                         print(e)
 
