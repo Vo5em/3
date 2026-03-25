@@ -344,7 +344,7 @@ async def probnik(callback: CallbackQuery):
 async def aktivttrail(callback: CallbackQuery):
     tg_id = callback.from_user.id
     tariff_id = 1
-    sub = find_sub(tg_id)
+    sub = await find_sub(tg_id)
     if not sub:
         await addkey(tg_id, tariff_id)
         await callback.answer('')
