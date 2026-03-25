@@ -349,12 +349,12 @@ async def aktivttrail(callback: CallbackQuery):
     if not sub:
         await addkey(tg_id, tariff_id)
         await callback.answer('')
-        await callback.message.edit_text(f'',
+        await callback.message.edit_text(f'13',
                                          reply_markup=kb.plus_trial)
     else:
         await plus_subtime(tg_id, tariff_id)
         await callback.answer('')
-        await callback.message.edit_text(f'',
+        await callback.message.edit_text(f'13',
                                          reply_markup=kb.plus_trial)
 
 
