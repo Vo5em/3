@@ -658,7 +658,7 @@ async def one(callback: CallbackQuery):
                                      '💰 888₽\n\n'
                                      '🔹 12 месяцев\n'
                                      '💰 1699₽\n\n'
-                                     '<b>🔄 Подписка продлевается автоматически раз в период</b>'
+                                     '<b>🔄 Подписка продлевается автоматически раз в период</b>\n'
                                      'Вы можете отключить автопродление в любой момент в профиле',
                                      parse_mode="HTML",
                                      reply_markup=kb.give_money_1)
@@ -666,7 +666,7 @@ async def one(callback: CallbackQuery):
 @user.callback_query(F.data == 'two')
 async def one(callback: CallbackQuery):
     await callback.answer('')
-    await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
+    await callback.message.edit_text('<b>Выберите период подписки</b>\n\n'
                                      '🔹 1 месяц\n'
                                      '💰 269₽\n\n'
                                      '🔹 3 месяца\n'
@@ -683,7 +683,7 @@ async def one(callback: CallbackQuery):
 @user.callback_query(F.data == 'five')
 async def one(callback: CallbackQuery):
     await callback.answer('')
-    await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
+    await callback.message.edit_text('<b>Выберите период подписки</b>\n\n'
                                      '🔹 1 месяц\n'
                                      '💰 555₽\n\n'
                                      '🔹 3 месяца\n'
