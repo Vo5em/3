@@ -48,7 +48,7 @@ async def create_payment(tg_id: int, amount: float,tariff_id: int, currency: str
             await session.commit()
             await session.refresh(sub)
         else:
-            await add_tarif_id(user.tg_id, tariff_id)
+            await add_tarif_id(tg_id, tariff_id)
 
 
     def _sync_create():
