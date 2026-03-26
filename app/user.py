@@ -232,8 +232,7 @@ async def home(callback: CallbackQuery):
 async def helps(callback: CallbackQuery):
     tg_id = callback.from_user.id
     await callback.answer('')
-    await callback.message.delete()
-    await callback.message.answer(
+    await callback.message.edit_text(
         f"<b>ID:</b> <code>{tg_id}</code>\n\n"
         f"Первым сообщением напиши свой ID\n"
         f"Дальше опиши проблему - и мы тебе поможем.",
@@ -383,8 +382,7 @@ async def period(callback: CallbackQuery):
     is_key = await find_key(tg_id)
     if not is_key:
         await callback.answer('')
-        await callback.message.delete()
-        await callback.message.answer('*Выберите ваше устройство:*',
+        await callback.message.edit_text('*Выберите ваше устройство:*',
                                          parse_mode="MarkdownV2",
                                          reply_markup=kb.gadgets_old)
     else:
@@ -394,13 +392,12 @@ async def period(callback: CallbackQuery):
             is_day = is_day.replace(tzinfo=MOSCOW_TZ)
         if is_day > now_moscow:
             await callback.answer('')
-            await callback.message.delete()
-            await callback.message.answer('*Выберите ваше устройство:*',
+            await callback.message.edit_text('*Выберите ваше устройство:*',
                                              parse_mode="MarkdownV2",
                                              reply_markup=kb.gadgets_old)
         else:
-            await callback.message.delete()
-            await callback.message.answer('*У вас нет активной подписки*',
+            await callback.answer('')
+            await callback.message.edit_text('*У вас нет активной подписки*',
                                                parse_mode="MarkdownV2",
                                                reply_markup=kb.go_pay)
 
@@ -563,8 +560,7 @@ async def refka(callback: CallbackQuery):
     ref_link = f"https://t.me/{BOT_USERNAME}?start={tg_id}"
     escaped_link = escape_markdown(ref_link)
     await callback.answer('')
-    await callback.message.delete()
-    await callback.message.answer(
+    await callback.message.edit_text(
         f"*Реферальная программа eschalon*\n\n"
         f"За каждого приглашённого друга, оформившего подписку,\n"
         f"Твой доступ продлевается на 7 дней\.\n\n"
@@ -578,71 +574,140 @@ async def refka(callback: CallbackQuery):
 async def sub(callback: CallbackQuery):
     tg_id = callback.from_user.id
     paymenthodid = await find_paymethod_id(tg_id)
+    tarif = await find_tarif(tg_id)
     if not paymenthodid:
         is_sub = await find_sub(tg_id)
         now_moscow = datetime.now(tz=MOSCOW_TZ)
         is_day = await find_dayend(tg_id)
         if not is_sub:
             await callback.answer('')
-            await callback.message.delete()
-            await callback.message.answer(
-                '<b>Абонемент не активен</b>\n\n'
-                '<b>Подписка на месяц — 150₽</b>\n'
-                '— Деньги будут списываться каждый месяц.\n'
-                '— Отключить автопродление можно в любой момент в этом разделе.\n'
-                '— При отключении доступ сохранится до конца оплаченного периода.\n\n'
-                '<b>Важно знать:</b> подключаясь, Ты принимаешь условия\n'
-                'ежемесячного списания.',
+            await callback.message.edit_text(
+                '<b>Выберите тариф:</b>\n\n'
+                '🔹 1 устройство\n'
+                'Подходит для личного использования'
+                '💰 от 179₽/мес\n\n'
+                'Подходит для личного использования'
+                '🔹 2 устройства\n'
+                'Можно использовать на телефоне и ПК\n'
+                '💰 от 269₽/мес\n\n'
+                '🔹 5 устройств\n'
+                'Подходит для семьи или нескольких устройств\n'
+                '💰 от 555₽/мес\n\n'
+                '👇 Выберите подходящий вариант',
                 parse_mode="HTML",
-                reply_markup=kb.give_money
+                reply_markup=kb.choose_duration
             )
         elif is_day < now_moscow:
             await callback.answer('')
-            await callback.message.delete()
-            await callback.message.answer(
-                '<b>Абонемент не активен</b>\n\n'
-                '<b>Подписка на месяц — 150₽</b>\n'
-                '— Деньги будут списываться каждый месяц.\n'
-                '— Отключить автопродление можно в любой момент в этом разделе.\n'
-                '— При отключении доступ сохранится до конца оплаченного периода.\n\n'
-                '<b>Важно знать:</b> подключаясь, Ты принимаешь условия\n'
-                'ежемесячного списания.',
+            await callback.message.edit_text(
+                '<b>Выберите тариф:</b>\n\n'
+                '🔹 1 устройство\n'
+                'Подходит для личного использования'
+                '💰 от 179₽/мес\n\n'
+                'Подходит для личного использования'
+                '🔹 2 устройства\n'
+                'Можно использовать на телефоне и ПК\n'
+                '💰 от 269₽/мес\n\n'
+                '🔹 5 устройств\n'
+                'Подходит для семьи или нескольких устройств\n'
+                '💰 от 555₽/мес\n\n'
+                '👇 Выберите подходящий вариант',
                 parse_mode="HTML",
-                reply_markup=kb.give_money
+                reply_markup=kb.choose_duration
             )
-
 
         else:
             await callback.answer('')
-            await callback.message.delete()
-            await callback.message.answer(
-                f"<b>Абонемент до {is_day.strftime('%d.%m.%Y')}</b>\n\n"
-                f"<b>Подписка на месяц — 150₽</b>\n"
-                f"— Деньги будут списываться каждый месяц.\n"
-                f"— Отключить автопродление можно в любой момент в этом разделе.\n"
-                f"— При отключении доступ сохранится до конца оплаченного периода.\n\n"
-                f"<b>Важно знать:</b> подключаясь, Ты принимаешь условия\n"
-                f"ежемесячного списания.",
+            await callback.message.edit_text(
+                f"<b>Текущий тариф: {tarif.name}</b>\n"
+                f"<b>⏳ Действует до: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
+                f"Вы можете продлить подписку или выбрать другой тариф\n\n"
+                f"🔹 1 устройство\n"
+                f"Подходит для личного использования"
+                f"💰 от 179₽/мес\n\n"
+                f"Подходит для личного использования"
+                f"🔹 2 устройства\n"
+                f"Можно использовать на телефоне и ПК\n"
+                f"💰 от 269₽/мес\n\n"
+                f"🔹 5 устройств\n"
+                f"Подходит для семьи или нескольких устройств\n"
+                f"💰 от 555₽/мес\n\n"
+                f"👇 Выберите подходящий вариант",
                 parse_mode="HTML",
-                reply_markup=kb.give_money
-                    )
+                reply_markup=kb.choose_duration
+                )
     else:
         is_day = await find_dayend(tg_id)
         if is_day.tzinfo is None:
             is_day = is_day.replace(tzinfo=MOSCOW_TZ)
         await callback.answer('')
-        await callback.message.delete()
-        await callback.message.answer(
-            f"<b>Следующее списание {is_day.strftime('%d.%m.%Y')}</b>\n\n"
-            f"<b>Подписка на месяц — 150₽</b>\n"
-            f"— Деньги будут списываться каждый месяц.\n"
-            f"— Отключить автопродление можно в любой момент в этом разделе.\n"
-            f"— При отключении доступ сохранится до конца оплаченного периода.\n\n"
-            f"<b>Важно знать:</b> подключаясь, Ты принимаешь условия\n"
-            f"ежемесячного списания.",
-            parse_mode="HTML",
-            reply_markup=kb.cancelautopay
-        )
+        await callback.message.edit_text(
+            f"<b>Текущий тариф: {tarif.name}</b>\n"
+                f"<b>🔄 Следующее списание: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
+                f"Вы можете выбрать другой тариф или отключить автопродление\n\n"
+                f"🔹 1 устройство\n"
+                f"Подходит для личного использования"
+                f"💰 от 179₽/мес\n\n"
+                f"Подходит для личного использования"
+                f"🔹 2 устройства\n"
+                f"Можно использовать на телефоне и ПК\n"
+                f"💰 от 269₽/мес\n\n"
+                f"🔹 5 устройств\n"
+                f"Подходит для семьи или нескольких устройств\n"
+                f"💰 от 555₽/мес\n\n"
+                f"👇 Выберите подходящий вариант",
+                parse_mode="HTML",
+                reply_markup=kb.cancelautopay
+                )
+
+@user.callback_query(F.data == 'one')
+async def one(callback: CallbackQuery):
+    await callback.answar('')
+    await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
+                                     '🔹 1 месяц\n'
+                                     '💰 179₽\n\n'
+                                     '🔹 3 месяца\n'
+                                     '💰 479₽\n\n'
+                                     '🔹 6 месяцев\n'
+                                     '💰 888₽\n\n'
+                                     '🔹 12 месяцев\n'
+                                     '💰 1699₽\n\n'
+                                     '👇 Выберите подходящий вариант',
+                                     parse_mode="HTML",
+                                     reply_markup=kb.give_money_1)
+
+@user.callback_query(F.data == 'two')
+async def one(callback: CallbackQuery):
+    await callback.answar('')
+    await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
+                                     '🔹 1 месяц\n'
+                                     '💰 269₽\n\n'
+                                     '🔹 3 месяца\n'
+                                     '💰 699₽\n\n'
+                                     '🔹 6 месяцев\n'
+                                     '💰 1399₽\n\n'
+                                     '🔹 12 месяцев\n'
+                                     '💰 2699₽\n\n'
+                                     '👇 Выберите подходящий вариант',
+                                     parse_mode="HTML",
+                                     reply_markup=kb.give_money_2)
+
+@user.callback_query(F.data == 'five')
+async def one(callback: CallbackQuery):
+    await callback.answar('')
+    await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
+                                     '🔹 1 месяц\n'
+                                     '💰 555₽\n\n'
+                                     '🔹 3 месяца\n'
+                                     '💰 1489₽\n\n'
+                                     '🔹 6 месяцев\n'
+                                     '💰 2888₽\n\n'
+                                     '🔹 12 месяцев\n'
+                                     '💰 5555₽\n\n'
+                                     '👇 Выберите подходящий вариант',
+                                     parse_mode="HTML",
+                                     reply_markup=kb.give_money_5)
+
 
 @user.callback_query(F.data == 'plsno')
 async def no(callback: CallbackQuery):
@@ -657,16 +722,14 @@ async def no(callback: CallbackQuery):
 
 @user.callback_query(F.data.startswith('doitpls_'))
 async def pay(callback: CallbackQuery):
-    id = int(callback.data.split("_")[1])
+    idd = int(callback.data.split("_")[1])
     tg_id = callback.from_user.id
-    tarif = await findd_tarif(id)
+    tarif = await findd_tarif(idd)
     payment_url = await create_payment(tg_id,tarif['price'],tarif['id'])
-    kburl = payment_keyboard(payment_url)
+    kburl = payment_keyboard(payment_url, idd)
     message_id = callback.message.message_id
     await save_message(tg_id, message_id)
     await callback.message.edit_text(
         f"Оплатите по ссылке:\n{payment_url}",
         reply_markup=kburl
     )
-
-

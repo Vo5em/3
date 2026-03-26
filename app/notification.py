@@ -46,12 +46,10 @@ async def notify_spss(tg_id: int):
 
         if not user or not user.message_id:
             return
-    await bot.edit_message_media(
+    await bot.edit_message_text(
         chat_id=tg_id,
         message_id=user.message_id,
-        media=InputMediaPhoto(
-            media=file04,
-            caption="Теперь Ты — один из тех, кто знает."
-        ),
+        text = '✅ Оплата прошла\n'
+               'Подписка активирована',
         reply_markup=kb.on_main
     )

@@ -117,15 +117,39 @@ on_main = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='↩️На главную', callback_data='home')]
 ])
 
+choose_duration = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = '1 устройство', callback_data='one')],
+    [InlineKeyboardButton(text = '2 устройства', callback_data = 'two')],
+    [InlineKeyboardButton(text = '5 устройств', callback_data='five')],
+    [InlineKeyboardButton(text = '⬅Назад', callback_data='home')]
+])
 
 go_pay = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Оформить подписку', callback_data='pay')]
 ])
 
 
-give_money = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Перейти к оплате', callback_data='doitpls_1')],
-    [InlineKeyboardButton(text = '1кк в час', callback_data = 'doitpls_2')],
+give_money_1 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='1 месц', callback_data='doitpls_2'),
+    InlineKeyboardButton(text = '3 месяца', callback_data = 'doitpls_3')],
+    [InlineKeyboardButton(text = '6 месяцев', callback_data = 'doitpls_4'),
+     InlineKeyboardButton(text='12 месяцев', callback_data = 'doitpls_5')],
+    [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
+])
+
+give_money_2 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='1 месц', callback_data='doitpls_6'),
+    InlineKeyboardButton(text = '3 месяца', callback_data = 'doitpls_7')],
+    [InlineKeyboardButton(text = '6 месяцев', callback_data = 'doitpls_8'),
+     InlineKeyboardButton(text='12 месяцев', callback_data = 'doitpls_9')],
+    [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
+])
+
+give_money_5 = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='1 месц', callback_data='doitpls_10'),
+    InlineKeyboardButton(text = '3 месяца', callback_data = 'doitpls_11')],
+    [InlineKeyboardButton(text = '6 месяцев', callback_data = 'doitpls_12'),
+     InlineKeyboardButton(text='12 месяцев', callback_data = 'doitpls_13')],
     [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
 ])
 
@@ -153,14 +177,28 @@ admin_panel = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 cancelautopay = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='1 устройство', callback_data='one')],
+    [InlineKeyboardButton(text='2 устройства', callback_data='two')],
+    [InlineKeyboardButton(text='5 устройств', callback_data='five')],
     [InlineKeyboardButton(text='Отмена авотпродления', callback_data="plsno")],
     [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
 ])
 
-def payment_keyboard(payurl: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Оплатить", url=payurl)],
-        [InlineKeyboardButton(text="↩️На главную", callback_data="home")]
-    ])
+def payment_keyboard(payurl: str, iid: int) -> InlineKeyboardMarkup:
+    if iid <= 5:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Оплатить", url=payurl)],
+            [InlineKeyboardButton(text="⬅Назад", callback_data="one")]
+        ])
+    elif 5 < iid <= 9:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Оплатить", url=payurl)],
+            [InlineKeyboardButton(text="⬅Назад", callback_data="two")]
+        ])
+    else:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="Оплатить", url=payurl)],
+            [InlineKeyboardButton(text="⬅Назад", callback_data="five")]
+        ])
 
 
