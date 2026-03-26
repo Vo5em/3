@@ -241,7 +241,6 @@ async def helps(callback: CallbackQuery):
     )
 
 
-
 @user.message(Command('help'))
 async def cmd_help(message: Message):
     tg_id = message.from_user.id

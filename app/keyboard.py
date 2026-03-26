@@ -33,7 +33,7 @@ main_olld = InlineKeyboardMarkup(inline_keyboard=[
 
 
 helps = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Поддержка',url='https://t.me/eschalonsupport')],
+    [InlineKeyboardButton(text='Поддержка',url='https://open.spotify.com/track/5hM5arv9KDbCHS0k9uqwjr')],
     [InlineKeyboardButton(text='⬅Назад',callback_data='home')]
 ])
 
