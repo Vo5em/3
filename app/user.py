@@ -234,8 +234,8 @@ async def helps(callback: CallbackQuery):
     await callback.answer('')
     await callback.message.edit_text(
         f"<b>ID:</b> <code>{tg_id}</code>\n\n"
-        f"Первым сообщением напиши свой ID\n"
-        f"Дальше опиши проблему - и мы тебе поможем.",
+        f"Первым сообщением напишите свой ID\n"
+        f"Дальше опишите проблему - и мы вам поможем.",
         parse_mode="HTML",
         reply_markup=kb.helps
     )
@@ -246,8 +246,8 @@ async def cmd_help(message: Message):
     tg_id = message.from_user.id
     await message.answer(
         f"<b>ID:</b><code>{tg_id}</code>\n\n"
-        f"Первым сообщением напиши свой ID\n"
-        f"Дальше опиши проблему - и мы тебе поможем.",
+        f"Первым сообщением напишите свой ID\n"
+        f"Дальше опишите проблему - и мы вам поможем.",
         parse_mode="HTML",
         reply_markup=kb.helps
     )
