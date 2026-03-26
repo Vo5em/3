@@ -584,15 +584,12 @@ async def sub(callback: CallbackQuery):
             await callback.message.edit_text(
                 '<b>Выберите тариф:</b>\n\n'
                 '🔹 1 устройство\n'
-                'Подходит для личного использования'
                 '💰 от 179₽/мес\n\n'
-                'Подходит для личного использования'
                 '🔹 2 устройства\n'
-                'Можно использовать на телефоне и ПК\n'
                 '💰 от 269₽/мес\n\n'
                 '🔹 5 устройств\n'
-                'Подходит для семьи или нескольких устройств\n'
                 '💰 от 555₽/мес\n\n'
+                'Количество устройств — это число одновременных подключений\n'
                 '👇 Выберите подходящий вариант',
                 parse_mode="HTML",
                 reply_markup=kb.choose_duration
@@ -602,15 +599,12 @@ async def sub(callback: CallbackQuery):
             await callback.message.edit_text(
                 '<b>Выберите тариф:</b>\n\n'
                 '🔹 1 устройство\n'
-                'Подходит для личного использования'
                 '💰 от 179₽/мес\n\n'
-                'Подходит для личного использования'
                 '🔹 2 устройства\n'
-                'Можно использовать на телефоне и ПК\n'
                 '💰 от 269₽/мес\n\n'
                 '🔹 5 устройств\n'
-                'Подходит для семьи или нескольких устройств\n'
                 '💰 от 555₽/мес\n\n'
+                'Количество устройств — это число одновременных подключений\n'
                 '👇 Выберите подходящий вариант',
                 parse_mode="HTML",
                 reply_markup=kb.choose_duration
@@ -623,14 +617,10 @@ async def sub(callback: CallbackQuery):
                 f"<b>⏳ Действует до: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
                 f"Вы можете продлить подписку или выбрать другой тариф\n\n"
                 f"🔹 1 устройство\n"
-                f"Подходит для личного использования"
                 f"💰 от 179₽/мес\n\n"
-                f"Подходит для личного использования"
                 f"🔹 2 устройства\n"
-                f"Можно использовать на телефоне и ПК\n"
                 f"💰 от 269₽/мес\n\n"
                 f"🔹 5 устройств\n"
-                f"Подходит для семьи или нескольких устройств\n"
                 f"💰 от 555₽/мес\n\n"
                 f"👇 Выберите подходящий вариант",
                 parse_mode="HTML",
@@ -646,14 +636,10 @@ async def sub(callback: CallbackQuery):
                 f"<b>🔄 Следующее списание: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
                 f"Вы можете выбрать другой тариф или отключить автопродление\n\n"
                 f"🔹 1 устройство\n"
-                f"Подходит для личного использования"
                 f"💰 от 179₽/мес\n\n"
-                f"Подходит для личного использования"
                 f"🔹 2 устройства\n"
-                f"Можно использовать на телефоне и ПК\n"
                 f"💰 от 269₽/мес\n\n"
                 f"🔹 5 устройств\n"
-                f"Подходит для семьи или нескольких устройств\n"
                 f"💰 от 555₽/мес\n\n"
                 f"👇 Выберите подходящий вариант",
                 parse_mode="HTML",
@@ -662,8 +648,8 @@ async def sub(callback: CallbackQuery):
 
 @user.callback_query(F.data == 'one')
 async def one(callback: CallbackQuery):
-    await callback.answar('')
-    await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
+    await callback.answer('')
+    await callback.message.edit_text('<b>Выберите период подписки</b>\n\n'
                                      '🔹 1 месяц\n'
                                      '💰 179₽\n\n'
                                      '🔹 3 месяца\n'
@@ -672,13 +658,14 @@ async def one(callback: CallbackQuery):
                                      '💰 888₽\n\n'
                                      '🔹 12 месяцев\n'
                                      '💰 1699₽\n\n'
-                                     '👇 Выберите подходящий вариант',
+                                     '<b>🔄 Подписка продлевается автоматически раз в период</b>'
+                                     'Вы можете отключить автопродление в любой момент в профиле',
                                      parse_mode="HTML",
                                      reply_markup=kb.give_money_1)
 
 @user.callback_query(F.data == 'two')
 async def one(callback: CallbackQuery):
-    await callback.answar('')
+    await callback.answer('')
     await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
                                      '🔹 1 месяц\n'
                                      '💰 269₽\n\n'
@@ -688,13 +675,14 @@ async def one(callback: CallbackQuery):
                                      '💰 1399₽\n\n'
                                      '🔹 12 месяцев\n'
                                      '💰 2699₽\n\n'
-                                     '👇 Выберите подходящий вариант',
+                                     '<b>🔄 Подписка продлевается автоматически раз в период</b>'
+                                     'Вы можете отключить автопродление в любой момент в профиле',
                                      parse_mode="HTML",
                                      reply_markup=kb.give_money_2)
 
 @user.callback_query(F.data == 'five')
 async def one(callback: CallbackQuery):
-    await callback.answar('')
+    await callback.answer('')
     await callback.message.edit_text('</b>Выберите период подписки</b>\n\n'
                                      '🔹 1 месяц\n'
                                      '💰 555₽\n\n'
@@ -704,7 +692,8 @@ async def one(callback: CallbackQuery):
                                      '💰 2888₽\n\n'
                                      '🔹 12 месяцев\n'
                                      '💰 5555₽\n\n'
-                                     '👇 Выберите подходящий вариант',
+                                     '<b>🔄 Подписка продлевается автоматически раз в период</b>'
+                                     'Вы можете отключить автопродление в любой момент в профиле',
                                      parse_mode="HTML",
                                      reply_markup=kb.give_money_5)
 
