@@ -96,7 +96,7 @@ async def addkey(user_id, tarif):
                         "fingerprint": srv["fp"],
                         "shortId": srv["sid"],
                         "subId": sub_id, # один на все
-                        "limitIp": limit.max_devices,
+                        "limitIp": limit['max_devices'],
                         "enable": True
                     }]
                 }),
@@ -158,7 +158,7 @@ async def delkey(user_uuid: str, tarif_id):
                         "flow": "xtls-rprx-vision",
                         "fingerprint": srv["fp"],
                         "shortId": srv["sid"],
-                        "limitIp": limit.max_devices,
+                        "limitIp": limit['max_devices'],
                         "enable": False
                     }]
                 })

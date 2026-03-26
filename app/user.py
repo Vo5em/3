@@ -660,7 +660,7 @@ async def pay(callback: CallbackQuery):
     id = int(callback.data.split("_")[1])
     tg_id = callback.from_user.id
     tarif = await findd_tarif(id)
-    payment_url = await create_payment(tg_id,tarif.price,tarif.id)
+    payment_url = await create_payment(tg_id,tarif['price'],tarif['id'])
     kburl = payment_keyboard(payment_url)
     message_id = callback.message.message_id
     await save_message(tg_id, message_id)

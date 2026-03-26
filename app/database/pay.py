@@ -101,9 +101,9 @@ async def yookassa_webhook(request: Request):
                 now = datetime.now(tz=MOSCOW_TZ)
                 tarif = findd_tarif(sub.tariff_id)
                 if sub.end_date < now:
-                    sub.end_date = now + timedelta(days=tarif.duration_days)
+                    sub.end_date = now + timedelta(days=tarif['duration_days'])
                 else:
-                    sub.end_date += timedelta(days=tarif.duration_days)
+                    sub.end_date += timedelta(days=tarif['duration_days'])
 
                 ruuid = sub.uuid
                 tg_id = int(user.tg_id)

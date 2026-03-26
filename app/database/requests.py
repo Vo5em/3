@@ -130,7 +130,16 @@ async def findd_tarif(id):
     async with async_session() as session:
         result= await session.execute(select(Tariff).where(Tariff.id == id))
         tarif = result.scalars().first()
-        return tarif
+        if not tarif:
+            return None
+
+        return {
+            "id": tarif.id,
+            "price": tarif.price,
+            "max_devices": tarif.max_devices,
+            'duration_days': tarif.duration_days,
+            'name': tarif.name
+        }
 
 
 async def cheng_state_d(uuid):
