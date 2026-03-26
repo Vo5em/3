@@ -348,13 +348,31 @@ async def aktivttrail(callback: CallbackQuery):
     await change_trial(tg_id)
     if not sub:
         await addkey(tg_id, tariff_id)
+        is_day = await find_dayend(tg_id)
+        if is_day.tzinfo is None:
+            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
         await callback.answer('')
-        await callback.message.edit_text(f'13',
+        await callback.message.edit_text(f'✅ Пробный доступ активирован\n\n'
+                                         f'⏳ Действует до: {is_day.strftime('%d.%m.%Y')}\n\n'
+                                         f'📊 Условия:\n'
+                                         f'• 1 устройство одновременно\n'
+                                         f'• Без ограничения по трафику\n'
+                                         f'• Доступ ко всем доступным серверам\n\n'
+                                         f'⚡ Подключение занимает меньше 1 минуты 👇',
                                          reply_markup=kb.plus_trial)
     else:
         await plus_subtime(tg_id, tariff_id)
+        is_day = await find_dayend(tg_id)
+        if is_day.tzinfo is None:
+            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
         await callback.answer('')
-        await callback.message.edit_text(f'13',
+        await callback.message.edit_text(f'✅ Пробный доступ активирован\n\n'
+                                         f'⏳ Действует до: {is_day.strftime('%d.%m.%Y')}\n\n'
+                                         f'📊 Условия:\n'
+                                         f'• 1 устройство одновременно\n'
+                                         f'• Без ограничения по трафику\n'
+                                         f'• Доступ ко всем доступным серверам\n\n'
+                                         f'⚡ Подключение занимает меньше 1 минуты 👇',
                                          reply_markup=kb.plus_trial)
 
 

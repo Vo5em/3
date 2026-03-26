@@ -115,7 +115,7 @@ async def sub(uuid: str):
                 f"&sid={srv['sid']}"
                 f"&spx=%2F"
                 f"&flow=xtls-rprx-vision"
-                f"#{srv["name"]}-{uuid[:8]}"
+                f"#{srv['name']}-{uuid[:8]}"
             )
             vless_lines.append(link)
 
