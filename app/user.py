@@ -582,9 +582,9 @@ async def sub(callback: CallbackQuery):
             await callback.answer('')
             await callback.message.edit_text(
                 '<b>Выберите тариф:</b>\n\n'
-                '1 устройство · от 179₽/мес\n\n'
-                '2 устройства · от 269₽/мес\n\n'
-                '5 устройств · от 555₽/мес\n\n'
+                '1 устройство · от 179₽/мес\n'
+                '2 устройства · от 269₽/мес\n'
+                '5 устройств · от 555₽/мес\n'
                 'Количество устройств - это число одновременных подключений\n',
                 parse_mode="HTML",
                 reply_markup=kb.choose_duration
@@ -593,9 +593,9 @@ async def sub(callback: CallbackQuery):
             await callback.answer('')
             await callback.message.edit_text(
                 '<b>Выберите тариф:</b>\n\n'
-                '1 устройство · от 179₽/мес\n\n'
-                '2 устройства · от 269₽/мес\n\n'
-                '5 устройств · от 555₽/мес\n\n'
+                '1 устройство · от 179₽/мес\n'
+                '2 устройства · от 269₽/мес\n'
+                '5 устройств · от 555₽/мес\n'
                 'Количество устройств — это число одновременных подключений\n',
                 parse_mode="HTML",
                 reply_markup=kb.choose_duration
@@ -605,11 +605,11 @@ async def sub(callback: CallbackQuery):
             await callback.answer('')
             await callback.message.edit_text(
                 f"<b>Текущий тариф: {tarif.name}</b>\n"
-                f"<b>⏳ Действует до: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
+                f"<b>Действует до: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
                 f"Вы можете продлить подписку или выбрать другой тариф\n\n"
-                f"1 устройство · от 179₽/мес\n\n"
-                f"2 устройства · от 269₽/мес\n\n"
-                f"5 устройств · от 555₽/мес\n\n",
+                f"1 устройство · от 179₽/мес\n"
+                f"2 устройства · от 269₽/мес\n"
+                f"5 устройств · от 555₽/мес\n",
                 parse_mode="HTML",
                 reply_markup=kb.choose_duration
                 )
@@ -620,11 +620,11 @@ async def sub(callback: CallbackQuery):
         await callback.answer('')
         await callback.message.edit_text(
             f"<b>Текущий тариф: {tarif.name}</b>\n"
-                f"<b>🔄 Следующее списание: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
+                f"<b>Следующее списание: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
                 f"Вы можете выбрать другой тариф или отключить автопродление\n\n"
-                f"1 устройство · от 179₽/мес\n\n"
-                f"2 устройства · от 269₽/мес\n\n"
-                f"5 устройств · от 555₽/мес\n\n",
+                f"1 устройство · от 179₽/мес\n"
+                f"2 устройства · от 269₽/мес\n"
+                f"5 устройств · от 555₽/мес\n",
                 parse_mode="HTML",
                 reply_markup=kb.cancelautopay
                 )
