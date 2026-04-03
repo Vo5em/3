@@ -200,7 +200,7 @@ async def home(callback: CallbackQuery):
                 f"• Выберите тариф\n"
                 f"• Активируйте подписку\n\n"
                 f"⚡ Подключение занимает меньше 1 минуты\n\n"
-                f"👇 Нажмите «Продлить / Оплатить»",
+                f"👇 Нажмите «Оплата / Продление»",
                 parse_mode="HTML",
                 reply_markup=kb.main_out
             )

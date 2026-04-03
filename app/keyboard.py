@@ -2,21 +2,21 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
 main_pr = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Оплата', callback_data='pay')],
+    [InlineKeyboardButton(text='Оплата / Продление', callback_data='pay')],
     [InlineKeyboardButton(text= 'Получить пробный период', callback_data='probnik')],
     [InlineKeyboardButton(text='Реферальная программа', callback_data='refka')],
     [InlineKeyboardButton(text='Помощь', callback_data='help')]
 ])
 
 main_out = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text= 'Оплата',callback_data='pay')],
+    [InlineKeyboardButton(text= 'Оплата / Продление',callback_data='pay')],
     [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
     [InlineKeyboardButton(text='Помощь',callback_data='help')]
 ])
 
 
 main_old = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text= 'Оплата',callback_data='pay')],
+    [InlineKeyboardButton(text= 'Оплата / Продление',callback_data='pay')],
     [InlineKeyboardButton(text='Перейти к подключению',callback_data='period')],
     [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
     [InlineKeyboardButton(text='Помощь',callback_data='help')]
@@ -24,7 +24,7 @@ main_old = InlineKeyboardMarkup(inline_keyboard=[
 
 
 main_olld = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text= 'Оплата',callback_data='pay'),
+    [InlineKeyboardButton(text= 'Оплата / Продление',callback_data='pay'),
      InlineKeyboardButton(text= 'Получить пробный период', callback_data='probnik')],
     [InlineKeyboardButton(text='Перейти к подключению',callback_data='period')],
     [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
