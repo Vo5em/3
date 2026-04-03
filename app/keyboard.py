@@ -177,10 +177,10 @@ admin_panel = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 cancelautopay = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='1 устройство', callback_data='one')],
-    [InlineKeyboardButton(text='2 устройства', callback_data='two')],
-    [InlineKeyboardButton(text='5 устройств', callback_data='five')],
-    [InlineKeyboardButton(text='Отмена авотпродления', callback_data="plsno")],
+    [InlineKeyboardButton(text='1 устройство', callback_data='one'),
+    InlineKeyboardButton(text='2 устройства', callback_data='two')],
+    [InlineKeyboardButton(text='5 устройств', callback_data='five'),
+    InlineKeyboardButton(text='Отмена авотпродления', callback_data="plsno")],
     [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
 ])
 
