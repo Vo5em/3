@@ -286,8 +286,7 @@ async def find_paymethod_id(tg_id):
 async def delpaymethod_id(tg_id):
     async with async_session() as session:
         paymenthod_id = await session.scalar(select(User.payment_method_id).where
-                                             (User.payment_method_id != None, User.tg_id == tg_id)
-                                             )
+                                             (User.payment_method_id != None, User.tg_id == tg_id))
         if paymenthod_id:
             await session.execute(update(User).where(User.tg_id == tg_id).values(payment_method_id=None,
                                                                                  notify_message=0)

@@ -146,7 +146,7 @@ give_money_2 = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 give_money_5 = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='1 месц', callback_data='doitpls_10'),
+    [InlineKeyboardButton(text='1 месяц', callback_data='doitpls_10'),
     InlineKeyboardButton(text = '3 месяца', callback_data = 'doitpls_11')],
     [InlineKeyboardButton(text = '6 месяцев', callback_data = 'doitpls_12'),
      InlineKeyboardButton(text='12 месяцев', callback_data = 'doitpls_13')],
