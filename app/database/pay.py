@@ -28,6 +28,7 @@ async def create_payment(tg_id: int, amount: float,tariff_id: int, currency: str
     async with async_session() as session:
         from app.database.requests import find_sub, add_tarif_id
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        user_id = user.id
         if not user:
             raise ValueError("Пользователь не найден")
 
@@ -36,14 +37,14 @@ async def create_payment(tg_id: int, amount: float,tariff_id: int, currency: str
         payload_value = user.payload
 
         now = datetime.now(tz=MOSCOW_TZ)
-        order = Order(user_id=user.id, create_at=now, status="pending")
+        order = Order(user_id=user_id, create_at=now, status="pending")
         session.add(order)
         await session.commit()
         await session.refresh(order)
         order_id = order.id
         subb = await find_sub(tg_id)
         if not subb:
-            sub = Subscription(user_id = user.id, tariff_id = tariff_id)
+            sub = Subscription(user_id = user_id, tariff_id = tariff_id)
             session.add(sub)
             await session.commit()
             await session.refresh(sub)
