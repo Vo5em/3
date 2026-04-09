@@ -47,10 +47,10 @@ class Subscription(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     tariff_id: Mapped[int] = mapped_column(ForeignKey("tariffs.id"))
-    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=False)
-    key: Mapped[str] = mapped_column(String(255))  # Сам ключ
-    uuid: Mapped[str] = mapped_column(String(60))  # UUID для подключения
+    key: Mapped[str] = mapped_column(String(255), nullable=True)  # Сам ключ
+    uuid: Mapped[str] = mapped_column(String(60), nullable=True)  # UUID для подключения
 
 
 
