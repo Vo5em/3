@@ -44,7 +44,7 @@ async def create_payment(tg_id: int, amount: float,tariff_id: int, currency: str
         order_id = order.id
         subb = await find_sub(tg_id)
         if not subb:
-            sub = Subscription(user_id = user_id, tariff_id = tariff_id)
+            sub = Subscription(user_id = user_id, tariff_id = tariff_id, end_date = now)
             session.add(sub)
             await session.commit()
             await session.refresh(sub)
