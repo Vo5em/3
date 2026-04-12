@@ -52,7 +52,7 @@ gadgets = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 plus_trial = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text = 'Перейти к подключению', callback_data='gadgets_old')],
+    [InlineKeyboardButton(text = 'Перейти к подключению', callback_data='period')],
     [InlineKeyboardButton(text = '↩️На главную', callback_data='home')]
 ])
 
