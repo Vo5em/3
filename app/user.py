@@ -51,9 +51,10 @@ async def cmd_start(message: Message, command: CommandObject):
                 reply_markup=kb.main_pr
             )
         else:
+            print("DEBUG is_sub:", is_sub)
             tarif = await find_tarif(tg_id)
             is_day = await find_dayend(tg_id)
-
+            print("DEBUG is_sub:", is_sub)
             if is_day.tzinfo is None:
                 is_day = is_day.replace(tzinfo=MOSCOW_TZ)
             if not paymenthodid:
