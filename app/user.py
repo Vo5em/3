@@ -38,6 +38,7 @@ async def cmd_start(message: Message, command: CommandObject):
     paymenthodid = await find_paymethod_id(tg_id)
     if is_key == False:
         is_sub = await find_sub(tg_id)
+        print("DEBUG is_sub:", is_sub)
         if not is_sub:
             await message.answer(
                 f"👤 Ваш ID: {tg_id}\n\n"

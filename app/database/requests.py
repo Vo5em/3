@@ -138,7 +138,7 @@ async def find_tarif(tg_id):
 
 async def findd_tarif(id):
     async with async_session() as session:
-        result= await session.execute(select(Tariff).where(Tariff.id == id))
+        result = await session.execute(select(Tariff).where(Tariff.id == id))
         tarif = result.scalars().first()
         if not tarif:
             return None
