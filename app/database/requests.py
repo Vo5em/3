@@ -160,7 +160,7 @@ async def cheng_state_d(uuid):
 async def find_sub(tg_id):
     async with async_session() as session:
         id = await session.scalar(select(User.id).where(User.tg_id == tg_id))
-        sub = await session.scalar(select(Subscription.id).where(Subscription.id == id))
+        sub = await session.scalar(select(Subscription.user_id).where(Subscription.id == id))
         return sub
 
 async def change_trial(tg_id):
