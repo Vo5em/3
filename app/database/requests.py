@@ -76,15 +76,25 @@ async def set_key(tg_id, vless_link, new_uuid, tarif):
         dayend = now_moscow + timedelta(days=tariff.duration_days)
         dayend_naive = dayend.replace(tzinfo=None)
         id = await session.scalar(select(User.id).where(User.tg_id == tg_id))
-        sub = Subscription(
-            user_id=id,
-            tariff_id=tarif,
-            key = vless_link,
-            uuid = new_uuid,
-            end_date=dayend_naive,
-            is_active=True
+        sub = await session.scalar(
+            select(Subscription).where(Subscription.user_id == id)
         )
-        session.add(sub)
+        if sub:
+            sub.key = vless_link
+            sub.uuid = new_uuid
+            sub.end_date = dayend_naive
+            sub.tariff_id = tarif
+            sub.is_active = True
+        else:
+            sub = Subscription(
+                user_id=id,
+                tariff_id=tarif,
+                key = vless_link,
+                uuid = new_uuid,
+                end_date=dayend_naive,
+                is_active=True
+            )
+            session.add(sub)
         await session.commit()
 
 
