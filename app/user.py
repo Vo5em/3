@@ -38,6 +38,7 @@ async def cmd_start(message: Message, command: CommandObject):
     paymenthodid = await find_paymethod_id(tg_id)
     if is_key == False:
         is_sub = await find_sub(tg_id)
+        print("DEBUG is_sub:", is_sub)
         if not is_sub:
             await message.answer(
                 f"👤 Ваш ID: {tg_id}\n\n"
@@ -50,8 +51,10 @@ async def cmd_start(message: Message, command: CommandObject):
                 reply_markup=kb.main_pr
             )
         else:
+            print("DEBUG is_sub:", is_sub)
             tarif = await find_tarif(tg_id)
             is_day = await find_dayend(tg_id)
+            print("DEBUG is_sub:", is_sub)
             if is_day.tzinfo is None:
                 is_day = is_day.replace(tzinfo=MOSCOW_TZ)
             if not paymenthodid:
