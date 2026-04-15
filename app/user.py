@@ -404,12 +404,12 @@ async def period(callback: CallbackQuery):
 @user.callback_query(F.data == 'android')
 async def connect_an(callback: CallbackQuery):
     user_id = callback.from_user.id
-    tarif_id = await find_tarif(user_id)
-    print("DEBUG is_sub:", tarif_id)
+    tarif = await find_tarif(user_id)
+    print("DEBUG is_sub:", tarif.id)
     is_key = await find_key(user_id)
     print("DEBUG is_sub:", is_key)
     if not is_key:
-      await addkey(user_id, tarif_id)
+      await addkey(user_id, tarif.id)
     is_key = await find_key(user_id)
     await callback.answer('')
     await callback.message.edit_text(f'<b>ИНСТРУКЦИЯ:</b>\n\n'
