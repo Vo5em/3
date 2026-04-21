@@ -104,7 +104,7 @@ async def check_end():
     now_moscow = datetime.now(tz=MOSCOW_TZ)
     try:
         async with async_session() as session:
-            end = await session.execute(select(Subscription).where
+            end = await session.execute(select(Subscription.uuid, Subscription.tariff_id).where
                                         (Subscription.end_date != None,
                                          Subscription.end_date < now_moscow,
                                          Subscription.is_active == True))
