@@ -369,7 +369,7 @@ async def check_notyfy():
                 await notify_end(user.tg_id)
                 user.notify_message = 2
 
-        await session.commit()
+            await session.commit()
 
     except Exception as e:
         print(f'{e}')
