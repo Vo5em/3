@@ -25,19 +25,21 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tg_id = mapped_column(BigInteger)
     referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
-    payment_method_id: Mapped[str] = mapped_column(String(100), nullable=True)
     payload: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
     message_id: Mapped[int] = mapped_column(BigInteger, nullable=True)
     notify_message: Mapped[int] = mapped_column(default=0)
     trial_used: Mapped[bool] = mapped_column(Boolean, default=False)
 
+
 class Tariff(Base):
     __tablename__ = 'tariffs'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(50))        # Стандарт / Плюс
+    name: Mapped[str] = mapped_column(String(50))
+    type: Mapped[str] = mapped_column(String(20))
     duration_days: Mapped[int] = mapped_column()         # 30 / 90 / 180 / 365
-    max_devices: Mapped[int] = mapped_column()           # 1 / 2 / 5 и т.д.
+    max_devices: Mapped[int] = mapped_column()
+    traffic_limit: Mapped[int] = mapped_column(nullable=True)
     price: Mapped[int] = mapped_column()                 # Цена в выбранной валюте=
 
 
@@ -47,10 +49,14 @@ class Subscription(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     tariff_id: Mapped[int] = mapped_column(ForeignKey("tariffs.id"))
+    type: Mapped[str] = mapped_column(String(20))
     end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=False)
+    payment_method_id = mapped_column(String(100), nullable=True)
     key: Mapped[str] = mapped_column(String(255), nullable=True)  # Сам ключ
-    uuid: Mapped[str] = mapped_column(String(60), nullable=True)  # UUID для подключения
+    uuid: Mapped[str] = mapped_column(String(60), nullable=True)
+    auto_renew: Mapped[bool] = mapped_column(default=False)
+    traffic_used: Mapped[int] = mapped_column(default=0)# UUID для подключения
 
 
 
@@ -87,6 +93,8 @@ class Servers(Base):
 
     # Активен ли сервер
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    type: Mapped[str] = mapped_column(String(20), nullable=False)
+
 
 class UserServer(Base):
     __tablename__ = 'userserver'
