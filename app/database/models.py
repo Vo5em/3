@@ -29,6 +29,7 @@ class User(Base):
     message_id: Mapped[int] = mapped_column(BigInteger, nullable=True)
     notify_message: Mapped[int] = mapped_column(default=0)
     trial_used: Mapped[bool] = mapped_column(Boolean, default=False)
+    lastsub: Mapped[int] = mapped_column(BigInteger, default=0)
 
 
 class Tariff(Base):
@@ -40,7 +41,7 @@ class Tariff(Base):
     duration_days: Mapped[int] = mapped_column()         # 30 / 90 / 180 / 365
     max_devices: Mapped[int] = mapped_column()
     traffic_limit: Mapped[int] = mapped_column(nullable=True)
-    price: Mapped[int] = mapped_column()                 # Цена в выбранной валюте=
+    price: Mapped[int] = mapped_column()                 # Цена в выбранной валюте
 
 
 class Subscription(Base):
@@ -52,11 +53,12 @@ class Subscription(Base):
     type: Mapped[str] = mapped_column(String(20))
     end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=False)
+    name = mapped_column(String(60), nullable=True)
     payment_method_id = mapped_column(String(100), nullable=True)
     key: Mapped[str] = mapped_column(String(255), nullable=True)  # Сам ключ
     uuid: Mapped[str] = mapped_column(String(60), nullable=True)
     auto_renew: Mapped[bool] = mapped_column(default=False)
-    traffic_used: Mapped[int] = mapped_column(default=0)# UUID для подключения
+    traffic_used: Mapped[int] = mapped_column(default=0)
 
 
 

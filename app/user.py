@@ -5,12 +5,13 @@ from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from aiogram.filters import CommandStart, Command, CommandObject
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
-from app.keyboard import payment_keyboard
+from app.keyboard import payment_keyboard, subscriptions_keyboard_trail, subscriptions_keyboard, infpodpiska
 import app.keyboard as kb
 from app.gen import addkey
 
-from app.database.requests import set_user, find_key, find_dayend, save_message, find_paymethod_id, change_trial
-from app.database.requests import delpaymethod_id, find_trial, find_tarif, findd_tarif, find_sub, plus_subtime
+from app.database.requests import set_user, find_key, find_dayend, save_message, find_paymethod_id, change_trial, count_subscriptions
+from app.database.requests import delpaymethod_id, find_trial, find_tarif, findd_tarif, find_sub, plus_subtime, find_idd
+from app.database.requests import find_subfull, save_sub
 from app.database.pay import create_payment
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
@@ -35,15 +36,13 @@ async def cmd_start(message: Message, command: CommandObject):
         await set_user(tg_id, None)
 
     is_key = await find_trial(tg_id)
-    paymenthodid = await find_paymethod_id(tg_id)
     if is_key == False:
         is_sub = await find_sub(tg_id)
 
         if not is_sub:
             await message.answer(
                 f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: отсутствует\n"
-                f"📡 Статус: Не активен\n\n"
+                f"📦 Подписки: отсутствуют\n\n"
                 f"🎁 Бесплатный пробный период доступен!\n"
                 f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
                 f"👇 Выберите действие ниже",
@@ -51,181 +50,58 @@ async def cmd_start(message: Message, command: CommandObject):
                 reply_markup=kb.main_pr
             )
         else:
-            tarif = await find_tarif(tg_id)
-            is_day = await find_dayend(tg_id)
-            if is_day.tzinfo is None:
-                is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-            if not paymenthodid:
-                await message.answer(
-                    f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif.name}\n"
-                    f"📱 Устройств: до {tarif.max_devices}\n\n"
-                    f"📡 Статус: Активен\n"
-                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                    f"♻️ Автопродление: отключено ",
-                    parse_mode="HTML",
-                    reply_markup=kb.main_old)
-            else:
-                await message.answer(
-                    f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif.name}\n"
-                    f"📱 Устройств: до {tarif.max_devices}\n\n"
-                    f"📡 Статус: Активен\n"
-                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                    f"♻️ Автопродление: включено",
-                    parse_mode="HTML",
-                    reply_markup=kb.main_old)
-
-    else:
-        is_day = await find_dayend(tg_id)
-        now_moscow = datetime.now(tz=MOSCOW_TZ)
-
-        if is_day.tzinfo is None:
-            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-
-        if is_day < now_moscow:
+            count = await count_subscriptions(tg_id)
             await message.answer(
                 f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: отсутствует\n"
-                f"📡 Статус: Не активен\n\n"
-                f"Чтобы продолжить пользоваться сервисом:\n"
-                f"• Выберите тариф\n"
-                f"• Активируйте подписку\n\n"
-                f"⚡ Подключение занимает меньше 1 минуты\n\n"
-                f"👇 Нажмите «Продлить / Оплатить»",
-                parse_mode="HTML",
-                reply_markup=kb.main_out
-            )
-        else:
-            tarif = await find_tarif(tg_id)
-            if not paymenthodid:
-                await message.answer(
-                f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: {tarif.name}\n"
-                f"📱 Устройств: до {tarif.max_devices}\n\n"
-                f"📡 Статус: Активен\n"
-                f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                f"♻️ Автопродление: отключено ",
+                f"📦 Количество подписок: {count}\n\n"
+                f"👇 Выберите действие ниже",
                 parse_mode="HTML",
                 reply_markup=kb.main_old)
-            else:
-                await message.answer(
+
+    else:
+        count = await count_subscriptions(tg_id)
+
+        await message.answer(
                 f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: {tarif.name}\n"
-                f"📱 Устройств: до {tarif.max_devices}\n\n"
-                f"📡 Статус: Активен\n"
-                f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                f"♻️ Автопродление: включено",
+                f"📦 Количество подписок: {count}\n\n"
+                f"👇 Выберите действие ниже",
                 parse_mode="HTML",
-                reply_markup=kb.main_old)
+                reply_markup=kb.main_out)
 
 
 @user.callback_query(F.data == 'home')
 async def home(callback: CallbackQuery):
     tg_id = callback.from_user.id
     is_key = await find_trial(tg_id)
-    paymenthodid = await find_paymethod_id(tg_id)
     if is_key == False:
         is_sub = await find_sub(tg_id)
         if not is_sub:
             await callback.answer('')
             await callback.message.edit_text(
                 f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: отсутствует\n"
-                f"📡 Статус: Не активен\n\n"
+                f"📦 Подписки: отсутствуют\n\n"
                 f"🎁 Бесплатный пробный период доступен!\n"
                 f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
                 f"👇 Выберите действие ниже",
                 parse_mode="HTML",
                 reply_markup=kb.main_pr
             )
-
         else:
-            tarif = await find_tarif(tg_id)
-            is_day = await find_dayend(tg_id)
-            now_moscow = datetime.now(tz=MOSCOW_TZ)
-
-            if is_day.tzinfo is None:
-                is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-
-            if is_day > now_moscow:
-                if not paymenthodid:
-                    await callback.message.edit_text(
-                        f"👤 Ваш ID: {tg_id}\n\n"
-                        f"📦 Ваш тариф: {tarif.name}\n"
-                        f"📱 Устройств: до {tarif.max_devices}\n\n"
-                        f"📡 Статус: Активен\n"
-                        f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                        f"🎁 Бесплатный пробный период доступен!\n"
-                        f"♻️ Автопродление: отключено ",
-                        parse_mode="HTML",
-                        reply_markup=kb.main_olld)
-                else:
-                    tarif = await find_tarif(tg_id)
-                    await callback.message.edit_text(
-                        f"👤 Ваш ID: {tg_id}\n\n"
-                        f"📦 Ваш тариф: {tarif.name}\n"
-                        f"📱 Устройств: до {tarif.max_devices}\n\n"
-                        f"📡 Статус: Активен\n"
-                        f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                        f"🎁 Бесплатный пробный период доступен!\n"
-                        f"♻️ Автопродление: включено",
-                        parse_mode="HTML",
-                        reply_markup=kb.main_olld)
-            else:
-                await callback.message.edit_text(
-                    f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: отсутствует\n"
-                    f"📡 Статус: Не активен\n\n"
-                    f"🎁 Бесплатный пробный период доступен!\n"
-                    f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
-                    f"⚡ Подключение занимает меньше 1 минуты\n\n"
-                    f"👇 Выберите действие ниже",
-                    parse_mode="HTML",
-                    reply_markup=kb.main_pr
-            )
-    else:
-        is_day = await find_dayend(tg_id)
-        now_moscow = datetime.now(tz=MOSCOW_TZ)
-
-        if is_day.tzinfo is None:
-            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-
-        if is_day < now_moscow:
+            count = await count_subscriptions(tg_id)
             await callback.message.edit_text(
-                f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Ваш тариф: отсутствует\n"
-                f"📡 Статус: Не активен\n\n"
-                f"Чтобы продолжить пользоваться сервисом:\n"
-                f"• Выберите тариф\n"
-                f"• Активируйте подписку\n\n"
-                f"⚡ Подключение занимает меньше 1 минуты\n\n"
-                f"👇 Нажмите «Оплата / Продление»",
-                parse_mode="HTML",
-                reply_markup=kb.main_out
-            )
-        else:
-            tarif = await find_tarif(tg_id)
-            if not paymenthodid:
-                await callback.message.edit_text(
-                    f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif.name}\n"
-                    f"📱 Устройств: до {tarif.max_devices}\n\n"
-                    f"📡 Статус: Активен\n"
-                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                    f"♻️ Автопродление: отключено ",
-                    parse_mode="HTML",
-                    reply_markup=kb.main_old)
-            else:
-                await callback.message.edit_text(
-                    f"👤 Ваш ID: {tg_id}\n\n"
-                    f"📦 Ваш тариф: {tarif.name}\n"
-                    f"📱 Устройств: до {tarif.max_devices}\n\n"
-                    f"📡 Статус: Активен\n"
-                    f"📅 До: {is_day.strftime('%d.%m.%Y')}\n\n"
-                    f"♻️ Автопродление: включено",
-                    parse_mode="HTML",
-                    reply_markup=kb.main_old)
+            f"👤 Ваш ID: {tg_id}\n\n"
+            f"📦 Количество подписок: {count}\n\n"
+            f"👇 Выберите действие ниже",
+            parse_mode="HTML",
+            reply_markup=kb.main_old)
+    else:
+        count = await count_subscriptions(tg_id)
+        await callback.message.edit_text(
+            f"👤 Ваш ID: {tg_id}\n\n"
+            f"📦 Количество подписок: {count}\n\n"
+            f"👇 Выберите действие ниже",
+            parse_mode="HTML",
+            reply_markup=kb.main_out)
 
 
 @user.callback_query(F.data == 'help')
@@ -321,57 +197,105 @@ async def cmd_ref(message: Message):
         reply_markup=kb.go_home
     )
 
+@user.message(F.data == 'subs')
+async def suss(callback: CallbackQuery):
+    tg_id = callback.from_user.id
+    spisok = subscriptions_keyboard(tg_id)
+    await callback.answer('')
+    await callback.message.edit_text(f'Выберите подписку',
+                                     reply_markup=spisok)
+
+
 
 @user.callback_query(F.data == 'probnik')
 async def probnik(callback: CallbackQuery):
+    tg_id = callback.from_user.id
+    sub = await find_sub(tg_id)
+    spisok = subscriptions_keyboard_trail(tg_id)
+    if not sub:
+        await callback.answer('')
+        await callback.message.edit_text(f'🎁 Бесплатный доступ\n\n'
+                                         f'Попробуйте VPN бесплатно перед покупкой\n\n'
+                                         f'📦 В пробный период входит:\n'
+                                         f'• До 2 устройств одновременно\n'
+                                         f'• Доступ ко всем серверам\n'
+                                         f'• Без ограничений по трафику\n\n'
+                                         f'⏳ Доступ: 3 дня\n'
+                                         f'🎯 Можно активировать только один раз\n'
+                                         f'⚡ Подключение занимает меньше 1 минуты\n\n'
+                                         f'👇 Нажмите кнопку ниже, чтобы начать',
+                                         reply_markup=kb.prob
+                                         )
+    else:
+        await callback.answer('')
+        await callback.message.edit_text(f'🎁 Бесплатный доступ\n\n'
+                                         f'Попробуйте VPN бесплатно перед покупкой\n\n'
+                                         f'📦 В пробный период входит:\n'
+                                         f'• До 2 устройств одновременно\n'
+                                         f'• Доступ ко всем серверам\n'
+                                         f'• Без ограничений по трафику\n\n'
+                                         f'⏳ Доступ: 3 дня\n'
+                                         f'🎯 Можно активировать только один раз\n'
+                                         f'⚡ Подключение занимает меньше 1 минуты\n\n'
+                                         f'👇 Выберите куда начислить подарочные дни',
+                                         reply_markup=spisok)
+
+
+@user.callback_query(F.data.startswith('subtr_'))
+async def plustrail(callback: CallbackQuery):
+    tg_id = callback.from_user.id
+    idd = int(callback.data.split("_")[1])
+    tariff_id = 1
+    await plus_subtime(tg_id, tariff_id, idd)
+    is_day = await find_dayend(tg_id, idd)
+    await change_trial(tg_id)
+    info = infpodpiska(idd)
     await callback.answer('')
-    await callback.message.edit_text(f'🎁 Бесплатный доступ\n\n'
-                                     f'Попробуйте VPN бесплатно перед покупкой\n\n'
-                                     f'📦 В пробный период входит:\n'
-                                     f'• До 2 устройств одновременно\n'
-                                     f'• Доступ ко всем серверам\n'
-                                     f'• Без ограничений по трафику\n\n'
-                                     f'⏳ Доступ: 3 дня\n'
-                                     f'🎯 Можно активировать только один раз\n'
-                                     f'⚡ Подключение занимает меньше 1 минуты\n\n'
-                                     f'👇 Нажмите кнопку ниже, чтобы начать',
-                                     reply_markup=kb.prob
-                                     )
+    await callback.message.edit_text(f'✅ Пробный доступ начислен\n\n'
+                                     f'⏳ Действует до: {is_day.strftime('%d.%m.%Y')}\n\n'
+                                     f'📊 Условия:\n'
+                                     f'• 1 устройство одновременно\n'
+                                     f'• Без ограничения по трафику\n'
+                                     f'• Доступ ко всем доступным серверам\n\n'
+                                     f'⚡ Подключение занимает меньше 1 минуты 👇',
+                                     reply_markup=info)
+
 
 @user.callback_query(F.data == 'aktiviroval')
 async def aktivttrail(callback: CallbackQuery):
     tg_id = callback.from_user.id
     tariff_id = 1
-    sub = await find_sub(tg_id)
     await change_trial(tg_id)
-    if not sub:
-        await addkey(tg_id, tariff_id)
-        is_day = await find_dayend(tg_id)
-        if is_day.tzinfo is None:
-            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-        await callback.answer('')
-        await callback.message.edit_text(f'✅ Пробный доступ активирован\n\n'
-                                         f'⏳ Действует до: {is_day.strftime('%d.%m.%Y')}\n\n'
-                                         f'📊 Условия:\n'
-                                         f'• 1 устройство одновременно\n'
-                                         f'• Без ограничения по трафику\n'
-                                         f'• Доступ ко всем доступным серверам\n\n'
-                                         f'⚡ Подключение занимает меньше 1 минуты 👇',
-                                         reply_markup=kb.plus_trial)
-    else:
-        await plus_subtime(tg_id, tariff_id)
-        is_day = await find_dayend(tg_id)
-        if is_day.tzinfo is None:
-            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
-        await callback.answer('')
-        await callback.message.edit_text(f'✅ Пробный доступ активирован\n\n'
-                                         f'⏳ Действует до: {is_day.strftime('%d.%m.%Y')}\n\n'
-                                         f'📊 Условия:\n'
-                                         f'• 1 устройство одновременно\n'
-                                         f'• Без ограничения по трафику\n'
-                                         f'• Доступ ко всем доступным серверам\n\n'
-                                         f'⚡ Подключение занимает меньше 1 минуты 👇',
-                                         reply_markup=kb.plus_trial)
+    await addkey(tg_id, tariff_id)
+    idd = await find_idd(tg_id)
+    is_day = await find_dayend(tg_id, idd)
+    if is_day.tzinfo is None:
+        is_day = is_day.replace(tzinfo=MOSCOW_TZ)
+    info = infpodpiska(idd)
+    await callback.answer('')
+    await callback.message.edit_text(f'✅ Пробный доступ активирован\n\n'
+                                     f'⏳ Действует до: {is_day.strftime('%d.%m.%Y')}\n\n'
+                                     f'📊 Условия:\n'
+                                     f'• 1 устройство одновременно\n'
+                                     f'• Без ограничения по трафику\n'
+                                     f'• Доступ ко всем доступным серверам\n\n'
+                                     f'⚡ Подключение занимает меньше 1 минуты 👇',
+                                     reply_markup=info)
+
+
+@user.callback_query(F.data.startswith('sub_'))
+async def infosub(callback: CallbackQuery):
+    idd = int(callback.data.split("_")[1])
+    sub = await find_subfull(idd)
+    tarif =  await findd_tarif(sub['tariff_id'])
+    await callback.answer('')
+    await callback.message.edit_text(f'{sub['name']}\n\n'
+                                     f'максимальное число устройств - {tarif['max_devices']}\n'
+                                     f'Трафик\n'
+                                     f'{sub['traffic_used']} из {tarif['traffic_limit']}\n\n'
+                                     f'истекает {sub['end_date']}',
+                                     reply_markup=kb.optionssub)
+
 
 
 
@@ -574,62 +498,45 @@ async def refka(callback: CallbackQuery):
 @user.callback_query(F.data == 'pay')
 async def sub(callback: CallbackQuery):
     tg_id = callback.from_user.id
-    paymenthodid = await find_paymethod_id(tg_id)
     tarif = await find_tarif(tg_id)
-    if not paymenthodid:
-        is_sub = await find_sub(tg_id)
-        now_moscow = datetime.now(tz=MOSCOW_TZ)
-        is_day = await find_dayend(tg_id)
-        if not is_sub:
-            await callback.answer('')
-            await callback.message.edit_text(
-                '<b>Выберите тариф:</b>\n\n'
-                '1 устройство · от 179₽/мес\n'
-                '2 устройства · от 269₽/мес\n'
-                '5 устройств · от 555₽/мес\n'
-                'Количество устройств - это число одновременных подключений\n',
-                parse_mode="HTML",
-                reply_markup=kb.choose_duration
-            )
-        elif is_day < now_moscow:
-            await callback.answer('')
-            await callback.message.edit_text(
-                '<b>Выберите тариф:</b>\n\n'
-                '1 устройство · от 179₽/мес\n'
-                '2 устройства · от 269₽/мес\n'
-                '5 устройств · от 555₽/мес\n'
-                'Количество устройств — это число одновременных подключений\n',
-                parse_mode="HTML",
-                reply_markup=kb.choose_duration
-            )
+    is_sub = await find_sub(tg_id)
+    now_moscow = datetime.now(tz=MOSCOW_TZ)
+    is_day = await find_dayend(tg_id)
+    if not is_sub:
+        await callback.answer('')
+        await callback.message.edit_text(
+            '<b>Выберите тариф:</b>\n\n'
+            '1 устройство · от 179₽/мес\n'
+            '2 устройства · от 269₽/мес\n'
+            '5 устройств · от 555₽/мес\n'
+            'Количество устройств - это число одновременных подключений\n',
+            parse_mode="HTML",
+            reply_markup=kb.choose_duration
+        )
+    if is_day < now_moscow:
+        await callback.answer('')
+        await callback.message.edit_text(
+            '<b>Выберите тариф:</b>\n\n'
+            '1 устройство · от 179₽/мес\n'
+            '2 устройства · от 269₽/мес\n'
+            '5 устройств · от 555₽/мес\n'
+            'Количество устройств — это число одновременных подключений\n',
+            parse_mode="HTML",
+            reply_markup=kb.choose_duration
+        )
 
-        else:
-            await callback.answer('')
-            await callback.message.edit_text(
-                f"<b>Текущий тариф: {tarif.name}</b>\n"
-                f"<b>Действует до: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
-                f"Вы можете продлить подписку или выбрать другой тариф\n\n"
-                f"1 устройство · от 179₽/мес\n"
-                f"2 устройства · от 269₽/мес\n"
-                f"5 устройств · от 555₽/мес\n",
-                parse_mode="HTML",
-                reply_markup=kb.choose_duration
-                )
     else:
-        is_day = await find_dayend(tg_id)
-        if is_day.tzinfo is None:
-            is_day = is_day.replace(tzinfo=MOSCOW_TZ)
         await callback.answer('')
         await callback.message.edit_text(
             f"<b>Текущий тариф: {tarif.name}</b>\n"
-                f"<b>Следующее списание: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
-                f"Вы можете выбрать другой тариф или отключить автопродление\n\n"
-                f"1 устройство · от 179₽/мес\n"
-                f"2 устройства · от 269₽/мес\n"
-                f"5 устройств · от 555₽/мес\n",
-                parse_mode="HTML",
-                reply_markup=kb.cancelautopay
-                )
+            f"<b>Действует до: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
+            f"Вы можете продлить подписку или выбрать другой тариф\n\n"
+            f"1 устройство · от 179₽/мес\n"
+            f"2 устройства · от 269₽/мес\n"
+            f"5 устройств · от 555₽/мес\n",
+            parse_mode="HTML",
+            reply_markup=kb.choose_duration
+            )
 
 @user.callback_query(F.data == 'one')
 async def one(callback: CallbackQuery):
@@ -691,6 +598,7 @@ async def pay(callback: CallbackQuery):
     kburl = payment_keyboard(payment_url, idd)
     message_id = callback.message.message_id
     await save_message(tg_id, message_id)
+    await save_sub(tg_id, )
     await callback.message.edit_text(
         f"Оплатите по ссылке:\n{payment_url}",
         reply_markup=kburl

@@ -1,8 +1,10 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from sqlalchemy import select
+from app.database.models import Subscription, User, async_session
 
 
 main_pr = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='Оплата / Продление', callback_data='pay')],
+    [InlineKeyboardButton(text='Купить', callback_data='pay')],
     [InlineKeyboardButton(text= 'Получить пробный период', callback_data='probnik')],
     [InlineKeyboardButton(text='Реферальная программа', callback_data='refka')],
     [InlineKeyboardButton(text='Помощь', callback_data='help')]
@@ -17,7 +19,7 @@ main_out = InlineKeyboardMarkup(inline_keyboard=[
 
 main_old = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text= 'Оплата / Продление',callback_data='pay')],
-    [InlineKeyboardButton(text='Перейти к подключению',callback_data='period')],
+    [InlineKeyboardButton(text='Доступы',callback_data='subs')],
     [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
     [InlineKeyboardButton(text='Помощь',callback_data='help')]
 ])
@@ -26,7 +28,7 @@ main_old = InlineKeyboardMarkup(inline_keyboard=[
 main_olld = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text= 'Оплата / Продление',callback_data='pay'),
      InlineKeyboardButton(text= 'Получить пробный период', callback_data='probnik')],
-    [InlineKeyboardButton(text='Перейти к подключению',callback_data='period')],
+    [InlineKeyboardButton(text='Доступы',callback_data='subs')],
     [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
     [InlineKeyboardButton(text='Помощь',callback_data='help')]
 ])
@@ -49,11 +51,6 @@ gadgets = InlineKeyboardMarkup(inline_keyboard=[
      InlineKeyboardButton(text='Windows', callback_data='windows')],
     [InlineKeyboardButton(text='MacOS', callback_data='macos'),
      InlineKeyboardButton(text='Android TV', callback_data='androidtv')]
-])
-
-plus_trial = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text = 'Перейти к подключению', callback_data='period')],
-    [InlineKeyboardButton(text = '↩️На главную', callback_data='home')]
 ])
 
 
@@ -117,6 +114,14 @@ on_main = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='↩️На главную', callback_data='home')]
 ])
 
+
+choose_type = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Белые списки', callback_data=''),
+     InlineKeyboardButton(text='Стандарт', callback_data='pay')],
+    [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
+])
+
+
 choose_duration = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text = '1 устройство', callback_data='one')],
     [InlineKeyboardButton(text = '2 устройства', callback_data = 'two')],
@@ -126,6 +131,13 @@ choose_duration = InlineKeyboardMarkup(inline_keyboard=[
 
 go_pay = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Оформить подписку', callback_data='pay')]
+])
+
+optionssub = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = 'Перейти к подключению', callback_data='period')],
+    [InlineKeyboardButton(text = 'Продлить', callback_data='')],
+    [InlineKeyboardButton(taxt = 'Переименовать', callback_data='')],
+    [InlineKeyboardButton(text = '⬅ К списку подписок', callback_data='')]
 ])
 
 
@@ -200,5 +212,128 @@ def payment_keyboard(payurl: str, iid: int) -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="Оплатить", url=payurl)],
             [InlineKeyboardButton(text="⬅Назад", callback_data="five")]
         ])
+
+async def subscriptions_keyboard_trail(tg_id: int) -> InlineKeyboardMarkup:
+    async with async_session() as session:
+        user_id = await session.scalar(
+            select(User.id).where(User.tg_id == tg_id)
+        )
+
+        if not user_id:
+            return InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="⬅ Назад", callback_data="main")]
+            ])
+
+        result = await session.execute(
+            select(Subscription).where(Subscription.user_id == user_id)
+        )
+        subs = result.scalars().all()
+
+    # если подписок нет
+    if not subs:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="❌ Нет подписок", callback_data="noop")],
+            [InlineKeyboardButton(text="⬅ Назад", callback_data="main")]
+        ])
+
+    # создаём кнопки
+    keyboard = []
+
+    for sub in subs:
+        text = f""
+        if sub.name:
+
+            # можно добавить чуть инфы (не обязательно)
+            if sub.is_active:
+                text +=  f"🟢 {sub.name} • {sub.type}"
+            else:
+                text += f"🔴 {sub.name} • {sub.type}"
+        else:
+            if sub.is_active:
+                text +=  f"🟢 {sub.uuid[8:]} • {sub.type}"
+            else:
+                text += f"🔴 {sub.uuid[8:]} • {sub.type}"
+
+
+        keyboard.append([
+            InlineKeyboardButton(
+                text=text,
+                callback_data=f"subtr_{sub.id}"
+            )
+        ])
+
+    # кнопка назад
+    keyboard.append([
+        InlineKeyboardButton(text="⬅ Назад", callback_data="main")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+async def subscriptions_keyboard(tg_id: int) -> InlineKeyboardMarkup:
+    async with async_session() as session:
+        user_id = await session.scalar(
+            select(User.id).where(User.tg_id == tg_id)
+        )
+
+        if not user_id:
+            return InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="⬅ Назад", callback_data="main")]
+            ])
+
+        result = await session.execute(
+            select(Subscription).where(Subscription.user_id == user_id)
+        )
+        subs = result.scalars().all()
+
+    # если подписок нет
+    if not subs:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="❌ Нет подписок", callback_data="noop")],
+            [InlineKeyboardButton(text="⬅ Назад", callback_data="main")]
+        ])
+
+    # создаём кнопки
+    keyboard = []
+
+    for sub in subs:
+        text = f""
+        if sub.name != None:
+
+            # можно добавить чуть инфы (не обязательно)
+            if sub.is_active:
+                text +=  f"🟢 {sub.name} • {sub.type}"
+            else:
+                text += f"🔴 {sub.name} • {sub.type}"
+        else:
+            if sub.is_active:
+                text +=  f"🟢 {sub.uuid[8:]} • {sub.type}"
+            else:
+                text += f"🔴 {sub.uuid[8:]} • {sub.type}"
+
+
+        keyboard.append([
+            InlineKeyboardButton(
+                text=text,
+                callback_data=f"sub_{sub.id}"
+            )
+        ])
+
+    # кнопка назад
+    keyboard.append([
+        InlineKeyboardButton(text="⬅ Назад", callback_data="main")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+async def infpodpiska(idd: int) -> InlineKeyboardMarkup:
+    keyboard = []
+    keyboard.append([
+        InlineKeyboardButton(
+            text=f'Настройки подключения',
+            callback_data=f"sub_{idd}"
+        )
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
 
 

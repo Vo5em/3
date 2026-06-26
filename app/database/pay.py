@@ -169,12 +169,12 @@ async def disable_autopay_if_failed():
 
     async with async_session() as session:
         result = await session.execute(
-            select(User, Subscription)
+            select(Subscription)
             .join(Subscription)
             .where(
                 Subscription.end_date < now,
                 Subscription.is_active.is_(True),
-                User.payment_method_id != None
+                Subscription.payment_method_id != None
             )
         )
 
@@ -195,9 +195,11 @@ async def disable_autopay_if_failed():
         await session.commit()
 
 
-async def create_auto_payment(user: User,session, amount, currency: str = "RUB"):
-    if not user.payment_method_id:
+async def create_auto_payment(sub: Subscription,session, amount, currency: str = "RUB"):
+    if not sub.payment_method_id:
         raise ValueError("Нет сохранённого способа оплаты")
+    from app.database.requests import find_payload
+    payload = await find_payload(sub.user_id)
 
     payment = Payment.create({
         "amount": {
@@ -205,15 +207,15 @@ async def create_auto_payment(user: User,session, amount, currency: str = "RUB")
             "currency": currency
         },
         "capture": True,
-        "payment_method_id": user.payment_method_id,  # ключ для автосписания
-        "description": f"Автопродление подписки {user.tg_id}",
+        "payment_method_id": sub.payment_method_id,  # ключ для автосписания
+        "description": f"Автопродление подписки {sub.user_id}",
         "metadata": {
-            "payload": user.payload,
+            "payload": payload,
             "type": "auto"
         }
     })
     order = Order(
-        user_id=user.id,
+        user_id=sub.user_id,
         payment_id=payment.id,
         status=payment.status,  # pending / succeeded
         type="auto"

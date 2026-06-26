@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from app.database.models import async_session, User, Order, Subscription,Tariff
 from app.notification import notify_before_end, notify_spss, notify_end
 from zoneinfo import ZoneInfo
-from sqlalchemy import select, update, delete, desc
+from sqlalchemy import select, update, delete, desc, func
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 from yookassa import Payment, Configuration
@@ -148,6 +148,7 @@ async def findd_tarif(id):
             "price": tarif.price,
             "max_devices": tarif.max_devices,
             'duration_days': tarif.duration_days,
+            'traffic_limit': tarif.traffic_limit,
             'name': tarif.name
         }
 
@@ -156,6 +157,30 @@ async def cheng_state_d(uuid):
     async with async_session() as session:
         await session.execute(update(Subscription).where(Subscription.uuid == uuid).values(is_active = False))
         await session.commit()
+
+async def find_subfull(idd):
+    async with async_session() as session:
+        result = await session.execute(
+            select(Subscription).where(Subscription.id == idd)
+        )
+        sub = result.scalars().all()
+        return {
+            'id': sub.id,
+            'user': sub.user_id,
+            'tariff_id': sub.tariff_id,
+            'type': sub.type,
+            'end_date': sub.end_date,
+            'is_active': sub.is_activate,
+            'name': sub.name,
+            'payment_method_id': sub.payment_method_id,
+            'key': sub.key,
+            'uuid': sub.uuid,
+            'auto_renew': sub.auto_renew,
+            'traffic_used': sub.traffic_used
+        }
+
+
+
 
 async def find_sub(tg_id):
     async with async_session() as session:
@@ -193,21 +218,47 @@ async def find_key(tg_id):
         return key
 
 
-async def find_dayend(tg_id):
+async def find_idd(tg_id):
+    async with async_session() as session:
+        id_user = await session.scalar(select(User.id).where(User.tg_id == tg_id))
+        idd = await session.scalar(select(Subscription.id).where(Subscription.user_id == id_user))
+        return idd
+
+
+async def find_dayend(tg_id, idd):
     async with async_session() as session:
         id = await session.scalar(select(User.id).where(User.tg_id == tg_id))
-        day = await session.scalar(select(Subscription.end_date).where(Subscription.user_id == id))
+        day = await session.scalar(select(Subscription.end_date).where(Subscription.user_id == id, Subscription.id == idd))
     return day
 
-async def plus_subtime(tg_id, tariff_id):
+
+async def count_subscriptions(tg_id: int) -> int:
+    async with async_session() as session:
+        user_id = await session.scalar(
+            select(User.id).where(User.tg_id == tg_id)
+        )
+
+        if not user_id:
+            return 0
+
+        result = await session.scalar(
+            select(func.count()).select_from(Subscription).where(
+                Subscription.user_id == user_id
+            )
+        )
+
+        return result or 0
+
+async def plus_subtime(tg_id, tariff_id, idd):
     async with async_session() as session:
         from app.gen import addkey
         id = await session.scalar(select(User.id).where(User.tg_id == tg_id))
         tarif = await findd_tarif(tariff_id)
-        day = await find_dayend(tg_id)
+        day = await find_dayend(tg_id, idd)
         if not day:
             await addkey(tg_id, tariff_id)
-        result = await session.execute(select(Subscription).where(Subscription.user_id == id))
+        result = await session.execute(select(Subscription).where(Subscription.user_id == id,
+                                                                  Subscription.id == idd ))
         sub = result.scalars().all()
         now_moscow = datetime.now(tz=MOSCOW_TZ)
         if sub.end_date < now_moscow:
@@ -217,12 +268,10 @@ async def plus_subtime(tg_id, tariff_id):
         else:
             dayend = sub.end_date + timedelta(days = tarif.duretion_days)
             dayend_naive = dayend.replace(tzinfo=None)
-        await session.execute(update(Subscription).where(Subscription.user_id == id).values(end_date = dayend_naive,
-                                                                                            is_active = True))
+        await session.execute(update(Subscription).where(Subscription.user_id == id,
+                                                         Subscription.id == idd).values(end_date = dayend_naive,
+                                                                                        is_active = True))
         await session.commit()
-
-
-
 
 
 async def find_tgid(id):
@@ -264,9 +313,9 @@ async def takeprise(ref_id2):
          await session.commit()
 
 
-async def find_payload(tg_id):
+async def find_payload(id):
     async with async_session() as session:
-        payload = await session.scalar(select(User.payload).where(User.tg_id == tg_id))
+        payload = await session.scalar(select(User.payload).where(User.id == id))
     return payload
 
 
@@ -277,6 +326,15 @@ async def save_message(tg_id, message_id):
         print("t")
         if user:
             user.message_id = message_id
+        await session.commit()
+
+async def save_sub(tg_id, idd):
+    async with async_session() as session:
+        result = await session.execute(select(User).where(User.tg_id == tg_id))
+        user = result.scalars().first()
+        print("t")
+        if user:
+            user.lastsub = idd
         await session.commit()
 
 
@@ -386,10 +444,10 @@ async def check_subscriptions():
                                            Subscription.end_date >= now,
                                            Subscription.is_active.is_(True))
             )
-            for user in users.scalars().all():
+            for sub in users.scalars().all():
                 result = await session.execute(
                     select(Order).where(
-                        Order.user_id == user.id,
+                        Order.user_id == sub.user_id,
                         Order.status == "pending"
                     )
                 )
@@ -398,13 +456,14 @@ async def check_subscriptions():
 
                 if order:
                     continue
-                tarif = await find_tarif(user.tg_id)
+                tarif = await findd_tarif(sub.tariff_id)
 
-                await create_auto_payment(user, session, tarif.price)
+                await create_auto_payment(sub, session, tarif['price'])
 
             await session.commit()
     except Exception as e:
         print(f"Ошибка в check_subscriptions: {e}")
+
 
 
 async def disable_autopay_if_failed():
