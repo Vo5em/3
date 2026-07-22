@@ -27,16 +27,21 @@ Configuration.secret_key = yookassa_api
 
 app = FastAPI()
 
+async def user_chek(tg_id):
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        if user:
+            return True
+        else:
+            return False
 
-async def set_user(tg_id: int, ref_id: int = None):
+async def set_user(tg_id: int):
     async with async_session() as session:
         # Проверяем, есть ли пользователь
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
             # Новый пользователь
             referrer = None
-            if ref_id:
-                referrer = await session.scalar(select(User).where(User.tg_id == ref_id))
 
             new_user = User(
                 tg_id=tg_id,
@@ -96,6 +101,46 @@ async def set_key(tg_id, vless_link, new_uuid, tarif):
             )
             session.add(sub)
         await session.commit()
+
+
+async def check_email(email):
+    async with async_session() as session:
+        email = await session.scalar(select(User).where(User.email == email))
+        if not email:
+            return False
+        else:
+            return True
+
+async def save_code(code, email):
+    async with async_session() as session:
+        now_moscow = datetime.now(tz=MOSCOW_TZ)
+        await session.scalar(update(User).where(User.email == email).values(code = code,
+                                                                            cadeat = now_moscow))
+        await session.commit()
+
+async def check_code(code, email):
+    async with async_session() as session:
+        code1 = await session.scalar(select(User.code).where(User.email == email))
+        if code1 == code:
+            return True
+        else:
+            return False
+
+async def save_tg_id(tg_id, email):
+    async with async_session() as session:
+        await session.scalar(update(User).where(User.email == email).values(tg_id = tg_id))
+        await session.commit()
+
+
+async def find_codeat(email):
+    async with async_session() as session:
+        time = await session.scalar(select(User.codeat).where(User.email == email))
+        now_moscow = datetime.now(tz=MOSCOW_TZ)
+        if now_moscow - time < timedelta(minutes=1):
+            return False
+        else:
+            return True
+
 
 
 async def check_end():
@@ -225,10 +270,10 @@ async def find_idd(tg_id):
         return idd
 
 
-async def find_dayend(tg_id, idd):
+async def find_dayend(tg_id):
     async with async_session() as session:
         id = await session.scalar(select(User.id).where(User.tg_id == tg_id))
-        day = await session.scalar(select(Subscription.end_date).where(Subscription.user_id == id, Subscription.id == idd))
+        day = await session.scalar(select(Subscription.end_date).where(Subscription.user_id == id))
     return day
 
 
@@ -328,14 +373,6 @@ async def save_message(tg_id, message_id):
             user.message_id = message_id
         await session.commit()
 
-async def save_sub(tg_id, idd):
-    async with async_session() as session:
-        result = await session.execute(select(User).where(User.tg_id == tg_id))
-        user = result.scalars().first()
-        print("t")
-        if user:
-            user.lastsub = idd
-        await session.commit()
 
 
 async def find_message(tg_id):
@@ -388,7 +425,7 @@ async def check_pending():
 
 async def plusnoty(tg_id):
     async with async_session() as session:
-        await session.execute(update(User).where(User.tg_id == tg_id).values(notify_message=2))
+        await session.execute(update(User).where(User.tg_id == tg_id).values(notify_message=0))
         await session.commit()
 
 
@@ -418,7 +455,7 @@ async def check_notyfy():
                     Subscription.end_date != None,
                     Subscription.end_date <= now_moscow + timedelta(hours=1),
                     Subscription.end_date >= now_moscow,
-                    User.notify_message < 2,
+                    User.notify_message <= 2,
                     Subscription.is_active.is_(True)
                 )
             )

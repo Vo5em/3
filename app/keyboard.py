@@ -2,6 +2,10 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select
 from app.database.models import Subscription, User, async_session
 
+st_choice = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Продолжить', callback = 'next')],
+    [InlineKeyboardButton(text='У меня есть аккаунт', callback = 'estakk')]
+])
 
 main_pr = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Купить', callback_data='pay')],
@@ -19,20 +23,33 @@ main_out = InlineKeyboardMarkup(inline_keyboard=[
 
 main_old = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text= 'Оплата / Продление',callback_data='pay')],
-    [InlineKeyboardButton(text='Доступы',callback_data='subs')],
+    [InlineKeyboardButton(text='Доступы',callback_data='period')],
     [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
     [InlineKeyboardButton(text='Помощь',callback_data='help')]
 ])
 
 
-main_olld = InlineKeyboardMarkup(inline_keyboard=[
+main_legend = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text= 'Оплата / Продление',callback_data='pay'),
      InlineKeyboardButton(text= 'Получить пробный период', callback_data='probnik')],
-    [InlineKeyboardButton(text='Доступы',callback_data='subs')],
+    [InlineKeyboardButton(text='Доступы',callback_data='period')],
     [InlineKeyboardButton(text='Реферальная программа',callback_data='refka')],
     [InlineKeyboardButton(text='Помощь',callback_data='help')]
 ])
 
+netvbdemail = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='Новый аккаунт', callback_data='next')],
+    [InlineKeyboardButton(text='Попробовать еще раз', callback_data='estakk')]
+])
+
+retrycode = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = 'Отправить код еще раз', callback_data='recode')],
+    [InlineKeyboardButton(text = 'Изменить почту', callback_data = 'estakk')]
+])
+
+tryagain = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = 'Отправить код еще раз', callback_data = 'recode')]
+])
 
 helps = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Поддержка',url='https://t.me/Rokoppo')],
@@ -40,7 +57,7 @@ helps = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 prob = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='✅ Активировать', callback_data='aktiviroval')],
+    [InlineKeyboardButton(text='✅ Активировать', callback_data='doitpls_1')],
     [InlineKeyboardButton(text='⬅Назад', callback_data= 'home')]
 ])
 
@@ -122,13 +139,6 @@ choose_type = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 
-choose_duration = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text = '1 устройство', callback_data='one')],
-    [InlineKeyboardButton(text = '2 устройства', callback_data = 'two')],
-    [InlineKeyboardButton(text = '5 устройств', callback_data='five')],
-    [InlineKeyboardButton(text = '⬅Назад', callback_data='home')]
-])
-
 go_pay = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Оформить подписку', callback_data='pay')]
 ])
@@ -150,20 +160,14 @@ give_money_1 = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 give_money_2 = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='1 месяц', callback_data='doitpls_6'),
-    InlineKeyboardButton(text = '3 месяца', callback_data = 'doitpls_7')],
-    [InlineKeyboardButton(text = '6 месяцев', callback_data = 'doitpls_8'),
-     InlineKeyboardButton(text='12 месяцев', callback_data = 'doitpls_9')],
+    [InlineKeyboardButton(text= '7 дней', callback_data = 'doitpls_1')],
+    [InlineKeyboardButton(text='1 месяц', callback_data='doitpls_2'),
+    InlineKeyboardButton(text = '3 месяца', callback_data = 'doitpls_3')],
+    [InlineKeyboardButton(text = '6 месяцев', callback_data = 'doitpls_4'),
+     InlineKeyboardButton(text='12 месяцев', callback_data = 'doitpls_5')],
     [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
 ])
 
-give_money_5 = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text='1 месяц', callback_data='doitpls_10'),
-    InlineKeyboardButton(text = '3 месяца', callback_data = 'doitpls_11')],
-    [InlineKeyboardButton(text = '6 месяцев', callback_data = 'doitpls_12'),
-     InlineKeyboardButton(text='12 месяцев', callback_data = 'doitpls_13')],
-    [InlineKeyboardButton(text='⬅Назад', callback_data='home')]
-])
 
 
 gadgets_old = InlineKeyboardMarkup(inline_keyboard=[

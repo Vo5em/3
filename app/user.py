@@ -3,15 +3,20 @@ import html
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from aiogram.filters import CommandStart, Command, CommandObject
+from aiogram.fsm.context import FSMContext
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
+
+from app.verify import gen_code
 from app.keyboard import payment_keyboard, subscriptions_keyboard_trail, subscriptions_keyboard, infpodpiska
 import app.keyboard as kb
 from app.gen import addkey
+from app.stats import email
 
-from app.database.requests import set_user, find_key, find_dayend, save_message, find_paymethod_id, change_trial, count_subscriptions
+from app.database.requests import set_user, find_key, find_dayend, save_message, find_paymethod_id, change_trial, \
+    count_subscriptions, check_code, save_tg_id, find_codeat
 from app.database.requests import delpaymethod_id, find_trial, find_tarif, findd_tarif, find_sub, plus_subtime, find_idd
-from app.database.requests import find_subfull, save_sub
+from app.database.requests import find_subfull, user_chek, check_email
 from app.database.pay import create_payment
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 
@@ -26,47 +31,115 @@ def escape_markdown(text: str) -> str:
 
 
 @user.message(CommandStart())
-async def cmd_start(message: Message, command: CommandObject):
+async def cmd_start(message: Message):
     tg_id = message.from_user.id
-    ref_id = command.args
-    if ref_id and ref_id.isdigit():
-        ref_id = int(ref_id)
-        await set_user(tg_id, ref_id)
+    usertr = await user_chek(tg_id)
+    if usertr == False:
+        await message.answer('продолжить или у вас уже есть аккаунт',
+                             reply_markup=kb.st_choice)
     else:
-        await set_user(tg_id, None)
+        is_key = await find_trial(tg_id)
+        if is_key == False:
+            is_sub = await find_sub(tg_id)
 
-    is_key = await find_trial(tg_id)
-    if is_key == False:
-        is_sub = await find_sub(tg_id)
+            if not is_sub:
+                await message.answer(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Подписки: отсутствуют\n\n"
+                    f"🎁 7 дней всего за 1 руб!\n"
+                    f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
+                    f"👇 Выберите действие ниже",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_pr
+                )
+            else:
+                count = await count_subscriptions(tg_id)
+                await message.answer(
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Количество подписок: {count}\n\n"
+                    f"👇 Выберите действие ниже",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_old)
 
-        if not is_sub:
-            await message.answer(
-                f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Подписки: отсутствуют\n\n"
-                f"🎁 Бесплатный пробный период доступен!\n"
-                f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
-                f"👇 Выберите действие ниже",
-                parse_mode="HTML",
-                reply_markup=kb.main_pr
-            )
         else:
             count = await count_subscriptions(tg_id)
+
             await message.answer(
-                f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Количество подписок: {count}\n\n"
-                f"👇 Выберите действие ниже",
-                parse_mode="HTML",
-                reply_markup=kb.main_old)
+                    f"👤 Ваш ID: {tg_id}\n\n"
+                    f"📦 Количество подписок: {count}\n\n"
+                    f"👇 Выберите действие ниже",
+                    parse_mode="HTML",
+                    reply_markup=kb.main_out)
 
+
+@user.callback_query(F.data == 'next')
+async def next(callback: CallbackQuery):
+    tg_id = callback.from_user.id
+    await set_user(tg_id)
+    await callback.answer('')
+    await callback.message.edit_text(
+        f"👤 Ваш ID: {tg_id}\n\n"
+        f"📦 Подписки: отсутствуют\n\n"
+        f"🎁 7 дней всего за 1 руб!\n"
+        f"Нажмите кнопку ниже, чтобы активировать пробный доступ и протестировать VPN\n"
+        f"👇 Выберите действие ниже",
+        parse_mode="HTML",
+        reply_markup=kb.main_pr
+    )
+
+@user.callback_query(F.data == 'estakk')
+async def estakk(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await state.set_state(email.mail)
+    await callback.answer('')
+    await callback.message.edit_text('Отправте свой email')
+
+
+@user.message(email.mail)
+async def chemail(message: Message, state: FSMContext):
+    await state.update_data(mail=message.text)
+    data = await state.get_data()
+    fl = await check_email(data['mail'])
+    if fl == False:
+        await message.answer(f'{data['mail']} такой аккаунт не зарегестрирован',
+                                         reply_markup=kb.netvbdemail)
     else:
-        count = await count_subscriptions(tg_id)
+        if await gen_code(data['mail']):
+            await state.set_state(email.code)
+            await message.answer(f'Код отправлен на почту.\n'
+                                 f'Отправте его в чат для верификации')
+        else:
+            await message.answer("Не удалось отправить письмо. Попробуйте позже.")
 
-        await message.answer(
-                f"👤 Ваш ID: {tg_id}\n\n"
-                f"📦 Количество подписок: {count}\n\n"
-                f"👇 Выберите действие ниже",
-                parse_mode="HTML",
-                reply_markup=kb.main_out)
+@user.message(email.code)
+async def chcode(message: Message, state: FSMContext):
+    tg_id = message.from_user.id
+    await state.update_data(code=message.text)
+    data = await state.get_data()
+    if await check_code(['code'], data['mail']):
+        await save_tg_id(tg_id, data['mail'])
+        await state.clear()
+        await message.answer('верификация пройдена')
+    else:
+        await state.set_state(email.code)
+        await message.answer('неверный код.', reply_markup = kb.retrycode)
+
+
+@user.callback_query(F.data == 'recode')
+async def recode(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    if find_codeat(data['mail']):
+        if await gen_code(data['mail']):
+            await state.set_state(email.code)
+            await callback.answer('')
+            await callback.message.edit_text(f'Код отправлен на почту.\n'
+                                 f'Отправте его в чат для верификации')
+        else:
+            await callback.answer('')
+            await callback.message.edit_text("Не удалось отправить письмо. Попробуйте позже.")
+    else:
+        await callback.answer('')
+        await callback.message.edit_text('Повторно запросить код можно через минуту.', reply_markup=kb.tryagain)
 
 
 @user.callback_query(F.data == 'home')
@@ -276,7 +349,7 @@ async def aktivttrail(callback: CallbackQuery):
     await callback.message.edit_text(f'✅ Пробный доступ активирован\n\n'
                                      f'⏳ Действует до: {is_day.strftime('%d.%m.%Y')}\n\n'
                                      f'📊 Условия:\n'
-                                     f'• 1 устройство одновременно\n'
+                                     f'• 2 устройство одновременно\n'
                                      f'• Без ограничения по трафику\n'
                                      f'• Доступ ко всем доступным серверам\n\n'
                                      f'⚡ Подключение занимает меньше 1 минуты 👇',
@@ -329,9 +402,7 @@ async def period(callback: CallbackQuery):
 async def connect_an(callback: CallbackQuery):
     user_id = callback.from_user.id
     tarif = await find_tarif(user_id)
-    print("DEBUG is_sub:", tarif.id)
     is_key = await find_key(user_id)
-    print("DEBUG is_sub:", is_key)
     if not is_key:
       await addkey(user_id, tarif.id)
     is_key = await find_key(user_id)
@@ -506,23 +577,25 @@ async def sub(callback: CallbackQuery):
         await callback.answer('')
         await callback.message.edit_text(
             '<b>Выберите тариф:</b>\n\n'
-            '1 устройство · от 179₽/мес\n'
-            '2 устройства · от 269₽/мес\n'
-            '5 устройств · от 555₽/мес\n'
-            'Количество устройств - это число одновременных подключений\n',
+            '7 дней · 1₽\n'
+            '1 мес · 179₽\n'
+            '3 мес · 479₽\n'
+            '6 мес · 888₽\n'
+            '12 мес · 1699₽\n',
             parse_mode="HTML",
-            reply_markup=kb.choose_duration
+            reply_markup=kb.give_money_2
         )
     if is_day < now_moscow:
         await callback.answer('')
         await callback.message.edit_text(
             '<b>Выберите тариф:</b>\n\n'
-            '1 устройство · от 179₽/мес\n'
-            '2 устройства · от 269₽/мес\n'
-            '5 устройств · от 555₽/мес\n'
+            '1 мес · 179₽\n'
+            '3 мес · 479₽\n'
+            '6 мес · 888₽\n'
+            '12 мес · 1699₽\n'
             'Количество устройств — это число одновременных подключений\n',
             parse_mode="HTML",
-            reply_markup=kb.choose_duration
+            reply_markup=kb.give_money_1
         )
 
     else:
@@ -531,51 +604,14 @@ async def sub(callback: CallbackQuery):
             f"<b>Текущий тариф: {tarif.name}</b>\n"
             f"<b>Действует до: {is_day.strftime('%d.%m.%Y')}</b>\n\n"
             f"Вы можете продлить подписку или выбрать другой тариф\n\n"
-            f"1 устройство · от 179₽/мес\n"
-            f"2 устройства · от 269₽/мес\n"
-            f"5 устройств · от 555₽/мес\n",
+            f"1 мес · 179₽\n"
+            f"3 мес · 479₽\n"
+            f"6 мес · 888₽\n"
+            f"12 мес · 1699₽",
             parse_mode="HTML",
-            reply_markup=kb.choose_duration
+            reply_markup=kb.give_money_1
             )
 
-@user.callback_query(F.data == 'one')
-async def one(callback: CallbackQuery):
-    await callback.answer('')
-    await callback.message.edit_text('<b>Выберите период подписки</b>\n\n'
-                                     '1 мес · 179₽\n'
-                                     '3 мес · 479₽\n'
-                                     '6 мес · 888₽\n'
-                                     '12 мес · 1699₽\n\n'
-                                     '<b>🔄 Автопродление включено </b>\n'
-                                     'Отключается в профиле в любой момент',
-                                     parse_mode="HTML",
-                                     reply_markup=kb.give_money_1)
-
-@user.callback_query(F.data == 'two')
-async def one(callback: CallbackQuery):
-    await callback.answer('')
-    await callback.message.edit_text('<b>Выберите период подписки</b>\n\n'
-                                     '1 мес · 269₽\n'
-                                     '3 мес · 699₽\n'
-                                     '6 мес · 1399₽\n'
-                                     '12 мес · 2699₽\n\n'
-                                     '<b>🔄 Автопродление включено </b>\n'
-                                     'Отключается в профиле в любой момент',
-                                     parse_mode="HTML",
-                                     reply_markup=kb.give_money_2)
-
-@user.callback_query(F.data == 'five')
-async def one(callback: CallbackQuery):
-    await callback.answer('')
-    await callback.message.edit_text('<b>Выберите период подписки</b>\n\n'
-                                     '1 мес · 555₽\n'
-                                     '3 мес · 1489₽\n'
-                                     '6 мес · 2888₽\n'
-                                     '12 мес · 5555₽\n\n'
-                                     '<b>🔄 Автопродление включено </b>\n'
-                                     'Отключается в профиле в любой момент',
-                                     parse_mode="HTML",
-                                     reply_markup=kb.give_money_5)
 
 
 @user.callback_query(F.data == 'plsno')
@@ -598,7 +634,6 @@ async def pay(callback: CallbackQuery):
     kburl = payment_keyboard(payment_url, idd)
     message_id = callback.message.message_id
     await save_message(tg_id, message_id)
-    await save_sub(tg_id, )
     await callback.message.edit_text(
         f"Оплатите по ссылке:\n{payment_url}",
         reply_markup=kburl

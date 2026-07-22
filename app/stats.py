@@ -10,3 +10,7 @@ class Newsonlyvip(StatesGroup):
 
 class Newsonlybroke(StatesGroup):
     message = State()
+
+class email(StatesGroup):
+    mail = State()
+    code = State()

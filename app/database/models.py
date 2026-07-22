@@ -23,13 +23,15 @@ class User(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id = mapped_column(BigInteger)
+    tg_id = mapped_column(BigInteger, nullable=True)
+    email: Mapped[str] = mapped_column(String(100), nullable=True)
     referrer_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=True)
     payload: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
     message_id: Mapped[int] = mapped_column(BigInteger, nullable=True)
     notify_message: Mapped[int] = mapped_column(default=0)
     trial_used: Mapped[bool] = mapped_column(Boolean, default=False)
-    lastsub: Mapped[int] = mapped_column(BigInteger, default=0)
+    code: Mapped[int] = mapped_column(BigInteger, nullable = True)
+    codeat: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Tariff(Base):
@@ -42,7 +44,6 @@ class Tariff(Base):
     max_devices: Mapped[int] = mapped_column()
     traffic_limit: Mapped[int] = mapped_column(nullable=True)
     price: Mapped[int] = mapped_column()                 # Цена в выбранной валюте
-
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
