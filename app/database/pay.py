@@ -13,7 +13,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 from yookassa import Payment, Configuration
 from config import yookassa_shopid, yookassa_api, mybot
-from app.gen2 import activatekey
+from app.gen import activatekey
 
 MOSCOW_TZ = ZoneInfo("Europe/Moscow")
 scheduler = AsyncIOScheduler(timezone=MOSCOW_TZ)
@@ -187,7 +187,6 @@ async def disable_autopay_if_failed():
                 .order_by(Order.create_at.desc())
             )
 
-            # 👉 Проверяем что была неудачная попытка оплаты
             if last_order and last_order.status == "canceled":
                 user.payment_method_id = None
 
@@ -207,7 +206,7 @@ async def create_auto_payment(sub: Subscription,session, amount, currency: str =
             "currency": currency
         },
         "capture": True,
-        "payment_method_id": sub.payment_method_id,  # ключ для автосписания
+        "payment_method_id": sub.payment_method_id,
         "description": f"Автопродление подписки {sub.user_id}",
         "metadata": {
             "payload": payload,
@@ -217,7 +216,7 @@ async def create_auto_payment(sub: Subscription,session, amount, currency: str =
     order = Order(
         user_id=sub.user_id,
         payment_id=payment.id,
-        status=payment.status,  # pending / succeeded
+        status=payment.status,
         type="auto"
     )
 

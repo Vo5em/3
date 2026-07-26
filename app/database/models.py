@@ -40,10 +40,10 @@ class Tariff(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     type: Mapped[str] = mapped_column(String(20))
-    duration_days: Mapped[int] = mapped_column()         # 30 / 90 / 180 / 365
+    duration_days: Mapped[int] = mapped_column()
     max_devices: Mapped[int] = mapped_column()
     traffic_limit: Mapped[int] = mapped_column(nullable=True)
-    price: Mapped[int] = mapped_column()                 # Цена в выбранной валюте
+    price: Mapped[int] = mapped_column()
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
@@ -56,7 +56,7 @@ class Subscription(Base):
     is_active: Mapped[bool] = mapped_column(default=False)
     name = mapped_column(String(60), nullable=True)
     payment_method_id = mapped_column(String(100), nullable=True)
-    key: Mapped[str] = mapped_column(String(255), nullable=True)  # Сам ключ
+    key: Mapped[str] = mapped_column(String(255), nullable=True)
     uuid: Mapped[str] = mapped_column(String(60), nullable=True)
     auto_renew: Mapped[bool] = mapped_column(default=False)
     traffic_used: Mapped[int] = mapped_column(default=0)
@@ -77,24 +77,16 @@ class Servers(Base):
     __tablename__ = "servers"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    # Имя сервера (удобный label)
     name: Mapped[str] = mapped_column(String(60), nullable=False)
-    # URL панели → https://domain.com/ или https://x.x.x.x/
     base_url: Mapped[str] = mapped_column(String(120), nullable=False)
-    # Адрес реального сервера (домен или IP)
     address: Mapped[str] = mapped_column(String(120), nullable=False)
-    # Порт (обычно 443)
     port: Mapped[int] = mapped_column(nullable=False, default=443)
-    # Reality параметры
-    pbk: Mapped[str] = mapped_column(String(120), nullable=False)   # publicKey
+    pbk: Mapped[str] = mapped_column(String(120), nullable=False)
     sni: Mapped[str] = mapped_column(String(120), nullable=False)
     sid: Mapped[str] = mapped_column(String(120), nullable=False)
-    fp: Mapped[str] = mapped_column(String(60), nullable=False)     # fingerprint
-    #login
+    fp: Mapped[str] = mapped_column(String(60), nullable=False)
     login: Mapped[str] = mapped_column(String(60), nullable=False)
     password: Mapped[str] = mapped_column(String(60), nullable=False)
-
-    # Активен ли сервер
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     type: Mapped[str] = mapped_column(String(20), nullable=False)
 

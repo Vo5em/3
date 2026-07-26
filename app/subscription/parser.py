@@ -10,7 +10,7 @@ def parse_subscription(data: list[dict]) -> list[Endpoint]:
         outbound = item["outbounds"][0]
         settings = outbound["settings"]
 
-        # 🇫🇮 Финляндия|VLESS_TCP
+
         country, protocol = item["remarks"].split("|", 1)
 
         endpoint = Endpoint(

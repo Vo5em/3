@@ -233,21 +233,21 @@ async def subscriptions_keyboard_trail(tg_id: int) -> InlineKeyboardMarkup:
         )
         subs = result.scalars().all()
 
-    # если подписок нет
+
     if not subs:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="❌ Нет подписок", callback_data="noop")],
             [InlineKeyboardButton(text="⬅ Назад", callback_data="main")]
         ])
 
-    # создаём кнопки
+
     keyboard = []
 
     for sub in subs:
         text = f""
         if sub.name:
 
-            # можно добавить чуть инфы (не обязательно)
+
             if sub.is_active:
                 text +=  f"🟢 {sub.name} • {sub.type}"
             else:
@@ -266,7 +266,7 @@ async def subscriptions_keyboard_trail(tg_id: int) -> InlineKeyboardMarkup:
             )
         ])
 
-    # кнопка назад
+
     keyboard.append([
         InlineKeyboardButton(text="⬅ Назад", callback_data="main")
     ])
@@ -289,21 +289,21 @@ async def subscriptions_keyboard(tg_id: int) -> InlineKeyboardMarkup:
         )
         subs = result.scalars().all()
 
-    # если подписок нет
+
     if not subs:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="❌ Нет подписок", callback_data="noop")],
             [InlineKeyboardButton(text="⬅ Назад", callback_data="main")]
         ])
 
-    # создаём кнопки
+
     keyboard = []
 
     for sub in subs:
         text = f""
         if sub.name != None:
 
-            # можно добавить чуть инфы (не обязательно)
+
             if sub.is_active:
                 text +=  f"🟢 {sub.name} • {sub.type}"
             else:
@@ -322,7 +322,7 @@ async def subscriptions_keyboard(tg_id: int) -> InlineKeyboardMarkup:
             )
         ])
 
-    # кнопка назад
+
     keyboard.append([
         InlineKeyboardButton(text="⬅ Назад", callback_data="main")
     ])

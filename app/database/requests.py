@@ -37,10 +37,8 @@ async def user_chek(tg_id):
 
 async def set_user(tg_id: int):
     async with async_session() as session:
-        # Проверяем, есть ли пользователь
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
         if not user:
-            # Новый пользователь
             referrer = None
 
             new_user = User(
@@ -48,11 +46,9 @@ async def set_user(tg_id: int):
                 referrer_id=referrer.id if referrer else None
             )
             session.add(new_user)
-            await session.flush()  # чтобы new_user.id появился
+            await session.flush()
 
-            # Если есть валидный реферер, даём бонус к подписке
             if referrer:
-                # Ищем активную подписку реферера
                 active_sub = await session.scalar(
                     select(Subscription)
                     .where(Subscription.user_id == referrer.id)
@@ -60,14 +56,11 @@ async def set_user(tg_id: int):
                 )
                 now_moscow = datetime.now(tz=MOSCOW_TZ)
 
-                # Если есть активная подписка → продлеваем
                 if active_sub:
                     if active_sub.end_date < now_moscow:
-                        # подписка истекла — старт с текущего момента
                         active_sub.end_date = now_moscow + timedelta(days=7)
-                        await activatekey(referrer.uuid, active_sub.tariff_id )# бонус +7 дней
+                        await activatekey(referrer.uuid, active_sub.tariff_id )
                     else:
-                        # продлеваем текущую подписку
                         active_sub.end_date += timedelta(days=7)
                     session.add(active_sub)
         await session.commit()
@@ -196,6 +189,11 @@ async def findd_tarif(id):
             'traffic_limit': tarif.traffic_limit,
             'name': tarif.name
         }
+
+async def cheng_state_a(uuid):
+    async with async_session() as session:
+        await session.execute(update(Subscription).where(Subscription.uuid == uuid).values(is_active = True))
+        await session.commit()
 
 
 async def cheng_state_d(uuid):
@@ -527,7 +525,6 @@ async def disable_autopay_if_failed():
                 .order_by(Order.create_at.desc())
             )
 
-            # 👉 Проверяем что была неудачная попытка оплаты
             if last_order and last_order.status == "canceled":
                 user.payment_method_id = None
 

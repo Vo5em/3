@@ -128,7 +128,7 @@ async def chcode(message: Message, state: FSMContext):
 @user.callback_query(F.data == 'recode')
 async def recode(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
-    if find_codeat(data['mail']):
+    if await find_codeat(data['mail']):
         if await gen_code(data['mail']):
             await state.set_state(email.code)
             await callback.answer('')
