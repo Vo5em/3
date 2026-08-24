@@ -1,4 +1,5 @@
-from models import Country, Endpoint
+from .models import Country, Endpoint
+from .selector import select_best_endpoint
 
 
 class SubscriptionBuilder:
@@ -19,8 +20,13 @@ class SubscriptionBuilder:
                     name=endpoint.country
                 )
 
-            countries[endpoint.country].endpoints.append(
-                endpoint
+            countries[endpoint.country].endpoints.append(endpoint)
+
+        # Выбираем лучшее подключение
+        for country in countries.values():
+
+            country.selected_endpoint = select_best_endpoint(
+                country.endpoints
             )
 
         return list(countries.values())

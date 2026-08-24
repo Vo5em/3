@@ -1,4 +1,4 @@
-from models import Endpoint
+from .models import Endpoint
 
 
 def parse_subscription(data: list[dict]) -> list[Endpoint]:

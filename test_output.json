@@ -1,0 +1,226 @@
+{
+    "dns": {
+        "queryStrategy": "UseIP",
+        "servers": [
+            {
+                "address": "8.8.8.8",
+                "skipFallback": false
+            }
+        ],
+        "tag": "dns_out"
+    },
+    "inbounds": [
+        {
+            "port": 10808,
+            "protocol": "mixed",
+            "settings": {
+                "auth": "noauth",
+                "udp": true,
+                "userLevel": 8
+            },
+            "sniffing": {
+                "destOverride": [
+                    "http",
+                    "tls",
+                    "quic",
+                    "fakedns"
+                ],
+                "enabled": true
+            },
+            "tag": "mixed"
+        },
+        {
+            "port": 10809,
+            "protocol": "http",
+            "settings": {
+                "userLevel": 8
+            },
+            "tag": "http"
+        }
+    ],
+    "log": {
+        "loglevel": "warning"
+    },
+    "outbounds": [
+        {
+            "protocol": "vless",
+            "tag": "country-0-endpoint-0",
+            "streamSettings": {
+                "network": "tcp",
+                "security": "tls",
+                "tcpSettings": {
+                    "header": {
+                        "type": "none"
+                    }
+                },
+                "tlsSettings": {
+                    "alpn": [
+                        "http/1.1"
+                    ],
+                    "fingerprint": "chrome",
+                    "serverName": "fin.upinternet.ru"
+                }
+            },
+            "settings": {
+                "address": "fin.upinternet.ru",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision",
+                "id": "7781cfd0-69e4-440c-81c7-6169dc90fcce",
+                "level": 8,
+                "port": 443
+            }
+        },
+        {
+            "protocol": "hysteria",
+            "tag": "country-0-endpoint-1",
+            "streamSettings": {
+                "finalmask": {
+                    "udp": [
+                        {
+                            "settings": {
+                                "password": "s4clin7t3omnxo09"
+                            },
+                            "type": "salamander"
+                        }
+                    ]
+                },
+                "hysteriaSettings": {
+                    "auth": "e3a3a184cbc04510a3e903e01a8ac13e",
+                    "masquerade": {
+                        "content": "",
+                        "dir": "",
+                        "headers": {},
+                        "insecure": false,
+                        "rewriteHost": false,
+                        "statusCode": 0,
+                        "type": "",
+                        "url": ""
+                    },
+                    "udpIdleTimeout": 60,
+                    "version": 2
+                },
+                "network": "hysteria",
+                "security": "tls",
+                "tlsSettings": {
+                    "alpn": [
+                        "h3"
+                    ],
+                    "fingerprint": "chrome",
+                    "serverName": "fin.upinternet.ru"
+                }
+            },
+            "settings": {
+                "address": "fin.upinternet.ru",
+                "port": 29143,
+                "version": 2
+            }
+        },
+        {
+            "protocol": "hysteria",
+            "tag": "country-1-endpoint-0",
+            "streamSettings": {
+                "finalmask": {
+                    "udp": [
+                        {
+                            "settings": {
+                                "password": "853q4glbmaofempq"
+                            },
+                            "type": "salamander"
+                        }
+                    ]
+                },
+                "hysteriaSettings": {
+                    "auth": "e3a3a184cbc04510a3e903e01a8ac13e",
+                    "masquerade": {
+                        "content": "",
+                        "dir": "",
+                        "headers": {},
+                        "insecure": false,
+                        "rewriteHost": false,
+                        "statusCode": 0,
+                        "type": "",
+                        "url": ""
+                    },
+                    "udpIdleTimeout": 60,
+                    "version": 2
+                },
+                "network": "hysteria",
+                "security": "tls",
+                "tlsSettings": {
+                    "alpn": [
+                        "h3"
+                    ],
+                    "fingerprint": "chrome",
+                    "serverName": "pl.upinternet.ru"
+                }
+            },
+            "settings": {
+                "address": "pl.upinternet.ru",
+                "port": 25118,
+                "version": 2
+            }
+        }
+    ],
+    "policy": {
+        "levels": {
+            "8": {
+                "connIdle": 300,
+                "downlinkOnly": 1,
+                "handshake": 4,
+                "uplinkOnly": 1
+            }
+        },
+        "system": {
+            "statsOutboundDownlink": true,
+            "statsOutboundUplink": true
+        }
+    },
+    "stats": {},
+    "observatory": {
+        "subjectSelector": [
+            "country-0-",
+            "country-1-"
+        ],
+        "probeUrl": "https://www.gstatic.com/generate_204",
+        "probeInterval": "10s",
+        "enableConcurrency": true
+    },
+    "routing": {
+        "domainStrategy": "AsIs",
+        "rules": [
+            {
+                "network": "tcp,udp",
+                "balancerTag": "🚀 Авто"
+            }
+        ],
+        "balancers": [
+            {
+                "tag": "🚀 Авто",
+                "selector": [
+                    "country-"
+                ],
+                "strategy": {
+                    "type": "leastPing"
+                }
+            },
+            {
+                "tag": "🇫🇮Финляндия",
+                "selector": [
+                    "country-0-"
+                ],
+                "strategy": {
+                    "type": "leastPing"
+                }
+            },
+            {
+                "tag": "🇵🇱Польша",
+                "selector": [
+                    "country-1-"
+                ],
+                "strategy": {
+                    "type": "leastPing"
+                }
+            }
+        ]
+    }
+}
